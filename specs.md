@@ -1,4 +1,4 @@
-MDD is a language blender.
+# MDD is a language blender.
 
 This is a draft concerning its specifications.
 
