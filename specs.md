@@ -24,7 +24,7 @@ MPP is itself a language, which is minimal and designed to be the glue
 to combining different languages.
 
 As MPP is a pre processor, you should think of the "additional" languages
-as pre processor languages. 
+as pre processor languages.
 
 -------------------------------------------------- 
 
