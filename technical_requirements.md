@@ -1,6 +1,6 @@
 # Technical requirements of MDD
 
 * well-located error messages.
-* escaping should be unnecessary at all times.
+* escaping characters or tokens should be unnecessary at all times.
 * ... 
 * 
