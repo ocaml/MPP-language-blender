@@ -1,4 +1,4 @@
-# MDD is a language blender.
+# MPP is a language blender.
 
 This is a draft for its specifications and documentation.
 
