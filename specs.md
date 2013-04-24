@@ -1,0 +1,63 @@
+
+-------------------------------------------------- 
+
+## Delimiters
+
+- A special block is declared using a special token, which can be
+customized.  They Are closed using a different special token, which
+can be customized as well. In the following examples, we will use
+respectively [[ and ]].
+
+- Endline comments are declared with a special token, which can be
+customized. In the following examples, we will use %%.
+
+- Comment blocks are between two special tokens, which can
+be customized. In the following examples, we will use /* and */.
+
+
+Blocks are considered named if the  opening token is not followed by a
+space character. Named blocks have to use the name to close the block.
+(If you don't want to use the name to close blocks, don't give names.)
+An unnamed special block:
+ [[ -echo Hello World ]]
+A special block named Foo:
+ [[Foo -echo Hello Foo Foo]] 
+
+An unnamed comment block:
+ /* plop */
+
+A named comment block:
+ /*bar plop bar*/
+
+We use named blocks to allow nested blocks.
+
+
+## Templating
+
+Templating is a feature which is freely given by the fundamental 
+design of MPP. 
+If the tpl function is implemented, it may be used like this:
+{{ -tpl project-name }}
+and this would have the effect of including the data associated with
+project-name.
+
+
+
+**************************************************
+
+### Several passes
+- inlined code with shared environment => whole document transformation (non code is transformed into "print").
+- special block calling a predefined function => everything is given as a single character string.
+- special block calling a shell command => the block is given to the stdin of the command.
+
+### Order of passes
+- inlined code first
+- in case of several inlined code with different environments, first one to appear is executed first (this means, possibly make an empty block at the beginning)
+- the rest is interpreted as any other code
+
+
+# Misc
+
+Shell command
+
+Functions
