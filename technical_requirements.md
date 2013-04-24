@@ -1,4 +1,5 @@
 # Technical requirements of MDD
 
-- well-located error messages
-- 
+* well-located error messages
+* ... 
+* 
