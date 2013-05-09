@@ -75,13 +75,13 @@ let actions : action_set ref = ref M.empty
 module Char_set =
 struct
   include Set.Make(Char) 
-  let set_of_list l =
+  let of_list l =
     List.fold_left (fun r e -> add e r) empty l 
 end
 
-let newline_chars = Char_set.set_of_list ['\n'; '\r']
-let space_chars = Char_set.set_of_list [' '; '\t']
-let blank_chars = Char_set.set_of_list ['\n'; '\r';' '; '\t']
+let newline_chars = Char_set.of_list ['\n'; '\r']
+let space_chars = Char_set.of_list [' '; '\t']
+let blank_chars = Char_set.of_list ['\n'; '\r';' '; '\t']
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 
   fun ?start:start ?msg:message (location:location) ->
@@ -477,7 +477,8 @@ let exec_command cmd arguments location =
         cmd
         rc
 
-
+(* *********************************************************** *)
+(* **begin library ******************************************* *)
 let cat filename =
   if Sys.file_exists filename then
     let i = open_in filename in
@@ -485,7 +486,15 @@ let cat filename =
         print_char (input_char i)
       done with End_of_file -> ()
 
-let builtins : action_set =
+let command arg charstream =
+  let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
+  let otmp = open_out tmp in
+    output_charstream otmp charstream;
+    ignore(Sys.command ("cat " ^ tmp ^ " | " ^ arg));
+    Sys.remove tmp
+
+let builtins : action_set ref =
+  let cmd = Function command in
   let echo =
     Function(fun a _ -> print_endline a) in
   let cat  =
@@ -506,10 +515,12 @@ let builtins : action_set =
   let set_close_comments_token = 
     Function(fun x _ -> close_comments_token := x)
   in
+  let res =
     List.fold_left
       (fun r (k,e) -> M.add k e r)
       M.empty
       [
+        "-cmd", cmd; 
         "-echo", echo; 
         "-cat", cat;
         "-setopen", set_opentoken;
@@ -518,10 +529,13 @@ let builtins : action_set =
         "-setopencomments", set_open_comments_token;
         "-setclosecomments", set_close_comments_token;
       ]
+  in ref res
 
+(* **end library ******************************************* *)
+(* *********************************************************** *)
 
 let lookup_builtin action_name =
-  match M.find action_name builtins with
+  match M.find action_name !builtins with
     | Function f -> f
     | Command s -> failwith "Command not yet implemented."
 
@@ -568,6 +582,17 @@ let preprocess (charstream: charstream) =
       else
         default (charstream.take())
     end
+
+  and init() = 
+    let builtin__input =
+      Function(fun arg cs ->
+        let x = open_in arg in
+          charstream.insert (charstream_of_inchannel arg x);
+          loop();
+          close_in x
+      )
+    in
+      builtins := M.add "-input" builtin__input !builtins
 
   (* default action *)
   and default = function
@@ -667,8 +692,9 @@ and open_comments_token_action () =
 and close_comments_token_action () = 
   parse_error ~msg:"Closing unopened comments block." (charstream.where());
   exit 1
-in 
-  loop ()
+in
+  init();
+  loop()
 
 
 let _ = 
