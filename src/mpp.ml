@@ -64,7 +64,7 @@ let output_charstream out c =
 module M = Map.Make(String)
 type set = string M.t
 type action =
-  | Function of (string -> charstream -> unit)
+  | Function of (string -> charstream -> out_channel -> unit)
   | Command of string
 type action_set = action M.t
 
@@ -75,40 +75,40 @@ let actions : action_set ref = ref M.empty
 module Char_set =
 struct
   include Set.Make(Char) 
-  let set_of_list l =
+  let of_list l =
     List.fold_left (fun r e -> add e r) empty l 
 end
 
-let newline_chars = Char_set.set_of_list ['\n'; '\r']
-let space_chars = Char_set.set_of_list [' '; '\t']
-let blank_chars = Char_set.set_of_list ['\n'; '\r';' '; '\t']
+let newline_chars = Char_set.of_list ['\n'; '\r']
+let space_chars = Char_set.of_list [' '; '\t']
+let blank_chars = Char_set.of_list ['\n'; '\r';' '; '\t']
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 
   fun ?start:start ?msg:message (location:location) ->
-  let f, l, c = location in
-    match start with
-      | None ->
-          begin match message with
-            | None -> 
-                Printf.eprintf
-                  "Error file:<%s> line:%d column:%d.\n%!"
-                  f l c
-            | Some m ->
-                Printf.eprintf
-                  "Error <%s> file:<%s> line:%d column:%d.\n%!"
-                  m f l c
-          end
-      | Some(filename,line,column) ->
-          begin match message with
-            | None -> 
-                Printf.eprintf
-                  "Error file<:%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
-                  filename line column f l c
-            | Some m ->
-                Printf.eprintf
-                  "Error <%s> file:<%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
-                  m filename line column f l c 
-          end
+    let f, l, c = location in
+      match start with
+        | None ->
+            begin match message with
+              | None -> 
+                  Printf.eprintf
+                    "Error file:<%s> line:%d column:%d.\n%!"
+                    f l c
+              | Some m ->
+                  Printf.eprintf
+                    "Error <%s> file:<%s> line:%d column:%d.\n%!"
+                    m f l c
+            end
+        | Some(filename,line,column) ->
+            begin match message with
+              | None -> 
+                  Printf.eprintf
+                    "Error file<:%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
+                    filename line column f l c
+              | Some m ->
+                  Printf.eprintf
+                    "Error <%s> file:<%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
+                    m filename line column f l c 
+            end
 
 let charstream_peek ?(n=1) charstream =
   let limit = ref n in
@@ -288,17 +288,17 @@ let read_until ?(failsafe=false) c charstream =
   let rec loop () =
     match charstream.take() with
       | Some z ->
-  let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
-          if c = z then
-            begin
-              charstream.push z;
-              Buffer.contents b
-            end
-          else
-            begin
-              Buffer.add_char b z;
-              loop ()
-            end
+          let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
+            if c = z then
+              begin
+                charstream.push z;
+                Buffer.contents b
+              end
+            else
+              begin
+                Buffer.add_char b z;
+                loop ()
+              end
       | None ->
           if failsafe then
             Buffer.contents b
@@ -348,7 +348,7 @@ let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Char_set.t) ?(exc
 (* This has to be patched to accept other integers than natural numbers. *)
 let parse_int charstream =
   if debug then Printf.eprintf "parse_int\n%!";
-(*   let start = charstream.where() in *)
+  (*   let start = charstream.where() in *)
   let res = Buffer.create 42 in
   let rec loop () =
     match charstream.take() with
@@ -472,44 +472,57 @@ let exec_command cmd arguments location =
   match Sys.command (cmd ^ arguments) with
     | 0 -> ()
     | rc ->
-      Printf.eprintf
-        "Warning: command <%s> exited with code %d\n%!"
-        cmd
-        rc
+        Printf.eprintf
+          "Warning: command <%s> exited with code %d\n%!"
+          cmd
+          rc
 
-
-let cat filename =
+(* *********************************************************** *)
+(* **begin library ******************************************* *)
+let cat out filename =
   if Sys.file_exists filename then
     let i = open_in filename in
       try while true do
-        print_char (input_char i)
+        output_char out (input_char i)
       done with End_of_file -> ()
 
-let builtins : action_set =
+
+let command arg charstream _out =
+  let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
+  let otmp = open_out tmp in
+    output_charstream otmp charstream;
+    ignore(Sys.command ("cat " ^ tmp ^ " | " ^ arg));
+    Sys.remove tmp
+
+
+let builtins : action_set ref =
+  let cmd = Function command in
   let echo =
-    Function(fun a _ -> print_endline a) in
-  let cat  =
-    Function(fun filename _ -> cat filename) 
+    Function(fun a _cs out -> output_string out a; output_char out '\n') in
+  let cat =
+    Function(fun filename _cs out -> cat out filename) 
   in
   let set_opentoken =
-    Function(fun x _ -> open_token := x)
+    Function(fun x _cs _out -> open_token := x)
   in
   let set_closetoken =
-    Function(fun x _ -> close_token := x)
+    Function(fun x _cs _out -> close_token := x)
   in
   let set_endline_comments_token =
-    Function(fun x _ -> endline_comments_token := x)
+    Function(fun x _cs _out -> endline_comments_token := x)
   in
   let set_open_comments_token =
-    Function(fun x _ -> open_comments_token := x)
+    Function(fun x _cs _out -> open_comments_token := x)
   in
   let set_close_comments_token = 
-    Function(fun x _ -> close_comments_token := x)
+    Function(fun x _cs _out -> close_comments_token := x)
   in
+  let r =
     List.fold_left
       (fun r (k,e) -> M.add k e r)
       M.empty
       [
+        "-cmd", cmd; 
         "-echo", echo; 
         "-cat", cat;
         "-setopen", set_opentoken;
@@ -518,14 +531,16 @@ let builtins : action_set =
         "-setopencomments", set_open_comments_token;
         "-setclosecomments", set_close_comments_token;
       ]
-
+  in ref r
+       (* **end library ********************************************* *)
+       (* *********************************************************** *)
 
 let lookup_builtin action_name =
-  match M.find action_name builtins with
+  match M.find action_name !builtins with
     | Function f -> f
     | Command s -> failwith "Command not yet implemented."
 
-let exec (action_name:string) (arguments:string) (charstream:charstream) =
+let exec (action_name:string) (arguments:string) (charstream:charstream) (out:out_channel) =
   if debug then Printf.eprintf "exec: %!";
   (* action_name : thing to do;
      arguments   : arguments on the first line;
@@ -533,13 +548,13 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) =
   if debug then Printf.eprintf "action_name:<%s> arguments:<%s>"
     action_name arguments;
   if action_name.[0] = '-' then
-    lookup_builtin action_name arguments charstream
+    (lookup_builtin action_name) arguments charstream out
   else
     failwith "General exec not yet implemented."
 
 
 
-let preprocess (charstream: charstream) =
+let preprocess (charstream: charstream) out =
   assert(!open_token <> "");
   assert(!close_token <> "");
   assert(!endline_comments_token <> "");
@@ -547,13 +562,7 @@ let preprocess (charstream: charstream) =
   assert(!close_comments_token <> "");
   
   (* entry point *)
-  let rec loop () : unit =
-    (*     begin match charstream.take () with *)
-    (*       | None -> () *)
-    (*       | Some c -> *)
-    (*           Printf.eprintf "[%s]" (Char.escaped c); *)
-    (*           charstream.push c; *)
-    (*     end; *)
+  let rec loop (): unit =
     begin
       if match_token !open_token charstream then
         open_token_action()
@@ -568,6 +577,18 @@ let preprocess (charstream: charstream) =
       else
         default (charstream.take())
     end
+
+  and init() =
+    let builtin__input =
+      Function(fun arg cs _out ->
+                 let x = open_in arg in
+                   charstream.insert (charstream_of_inchannel arg x);
+                   loop();
+                   close_in x
+              )
+    in
+      builtins := M.add "-input" builtin__input !builtins
+
 
   (* default action *)
   and default = function
@@ -607,87 +628,123 @@ let preprocess (charstream: charstream) =
         | Some c ->
             charstream.push c;
             let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
-      Some (read_until ~failsafe:true ' ' charstream)
-  in
-  let () = eat space_chars charstream in
-  let block_start_location = charstream.where() in
-  let block_contents =
-    (* the contents of the block *)
-    match block_name with
-      | Some name -> 
-          if debug then Printf.eprintf "name=<%s>%!" name;
-          read_until_word charstream (name^ !close_token)
-      | None -> read_until_word charstream (!close_token)
-  in
-  let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
-  let blockcharstream =
-    (* the contents of the block is converted into a charstream *)
-    charstream_of_string ~location:(block_start_location) block_contents
-  in
-  let action_name : string = (* name of the action *)
-    eat space_chars blockcharstream;
-    read_until_one_of
-      space_chars
-      ~exclude:newline_chars
-      ~expect:"Zero or more spaces, and then an action name."
-      blockcharstream
-  in
-  let action_arguments : string = (* action arguments *)
-    match blockcharstream.take() with
-      | Some c ->
-          blockcharstream.push c;
-          read_until_one_of ~failsafe:true newline_chars blockcharstream
-      | None ->
-          parse_error
-            ~msg:"No characters left to read right after an opening!"
-            (blockcharstream.where());
-          exit 1
-  in
-    exec action_name action_arguments blockcharstream;
-    loop ()
+              Some (read_until ~failsafe:true ' ' charstream)
+    in
+    let () = eat space_chars charstream in
+    let block_start_location = charstream.where() in
+    let block_contents =
+      (* the contents of the block *)
+      match block_name with
+        | Some name -> 
+            if debug then Printf.eprintf "name=<%s>%!" name;
+            read_until_word charstream (name^ !close_token)
+        | None -> read_until_word charstream (!close_token)
+    in
+    let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
+    let blockcharstream =
+      (* the contents of the block is converted into a charstream *)
+      charstream_of_string ~location:(block_start_location) block_contents
+    in
+    let action_name : string = (* name of the action *)
+      eat space_chars blockcharstream;
+      read_until_one_of
+        space_chars
+        ~exclude:newline_chars
+        ~expect:"Zero or more spaces, and then an action name."
+        blockcharstream
+    in
+    let action_arguments : string = (* action arguments *)
+      match blockcharstream.take() with
+        | Some c ->
+            blockcharstream.push c;
+            read_until_one_of ~failsafe:true newline_chars blockcharstream
+        | None ->
+            parse_error
+              ~msg:"No characters left to read right after an opening!"
+              (blockcharstream.where());
+            exit 1
+    in
+      exec action_name action_arguments blockcharstream out;
+      loop ()
 
-(* Closing a block that hasn't been opened is wrong. *)
-and close_token_action () =
-  parse_error ~msg:"Closing unopened block." (charstream.where());
-  exit 1
+  (* Closing a block that hasn't been opened is wrong. *)
+  and close_token_action() =
+    parse_error ~msg:"Closing unopened block." (charstream.where());
+    exit 1
 
-(* Just ignore what has to be ignored. *)
-and endline_comments_token_action () =
-  let _l = read_until_one_of newline_chars charstream in
-    if debug then Printf.eprintf  "comments: <%s>\n%!" _l;
+  (* Just ignore what has to be ignored. *)
+  and endline_comments_token_action() =
+    let _l = read_until_one_of newline_chars charstream in
+      if debug then Printf.eprintf  "comments: <%s>\n%!" _l;
+      loop()
+
+  (* New comment block. *)
+  and open_comments_token_action() = 
+    let _c = read_until_word charstream (!close_comments_token) in
+      if debug then Printf.eprintf  "comments: <%s>\n%!" _c;
+      loop()
+
+  (* Closing a comment block that hasn't been opened is wrong. *)
+  and close_comments_token_action() = 
+    parse_error ~msg:"Closing unopened comments block." (charstream.where());
+    exit 1
+  in 
+    init();
     loop()
-
-(* New comment block. *)
-and open_comments_token_action () = 
-  let _c = read_until_word charstream (!close_comments_token) in
-    if debug then Printf.eprintf  "comments: <%s>\n%!" _c;
-    loop()
-
-(* Closing a comment block that hasn't been opened is wrong. *)
-and close_comments_token_action () = 
-  parse_error ~msg:"Closing unopened comments block." (charstream.where());
-  exit 1
-in 
-  loop ()
 
 
 let _ = 
   let l = Array.length Sys.argv in
-    try
-      if l > 1 then 
-        for i = 1 to l - 1 do
-          if
-            try Filename.chop_extension Sys.argv.(i) ^ ".mpp" = Sys.argv.(i)
-            with Invalid_argument _ -> false 
-          then
-            Printf.eprintf "Warning: filename <%s> does not have .mpp extension.\n%!" Sys.argv.(i);
-          preprocess (charstream_of_inchannel Sys.argv.(i) (open_in Sys.argv.(i)))
-        done
+  let overwrite = ref false in
+  let continue = ref false in
+  let process_one_file filename =
+    if not(Sys.file_exists filename) then
+      begin
+        if !continue then
+          ()
+        else
+          Printf.eprintf "Error: file <%s> does not exist, I will stop. You might want to use -continue.\n%!"
+            filename
+      end
+    else
+      if
+        try Filename.chop_extension filename ^ ".mpp" = filename
+        with Invalid_argument _ -> false
+      then
+        begin
+          let outputfilename = Filename.chop_extension filename in
+            if Sys.file_exists outputfilename then
+              begin
+                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
+                  outputfilename
+              end
+            else
+              begin
+                let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
+                  preprocess (charstream_of_inchannel filename (open_in filename)) out
+              end
+        end
       else
-        preprocess (charstream_of_inchannel "/dev/stdin" stdin);
+        begin
+          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
+          preprocess (charstream_of_inchannel filename (open_in filename)) stdout
+        end
+  in
+    try
+      if l > 1 then
+        Arg.parse
+          (Arg.align [
+             "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
+             "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+             "--", Arg.Rest(process_one_file), " Use this option if you have filenames that begin with a dash.";
+           ])
+          process_one_file
+          ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]\nIf a filename doesn't have .mpp extension, it will output on stdout. If a file exists, it won't be overwritten unless you specify -overwrite. If you want to overwrite only certain files, you should invoke this programme separately.\nList of options:")
+      else
+        preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
     with e ->
-      Printexc.print_backtrace stdout;
-      Printf.eprintf "Exception raised: <%s>\nBacktrace:%!" (Printexc.to_string e)
+      Printexc.print_backtrace stderr;
+      Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e)
 
 
 
