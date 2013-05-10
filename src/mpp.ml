@@ -15,7 +15,7 @@
    * {{{ -setopencomments <<<}}}
    * {{{ -setclosecomments >>>}}}
    * <<< plop >>>
-   * {{{ANamedBlock -echo echo from ANamedBlock ANamedBlock}}}
+   * {{{29873 -echo whatever 29873}}}
    ********************************************************************* *)
 
 
@@ -532,8 +532,10 @@ let builtins : action_set ref =
         "-setclosecomments", set_close_comments_token;
       ]
   in ref r
-       (* **end library ********************************************* *)
-       (* *********************************************************** *)
+
+(* **end library ********************************************* *)
+(* *********************************************************** *)
+
 
 let lookup_builtin action_name =
   match M.find action_name !builtins with
@@ -588,7 +590,6 @@ let preprocess (charstream: charstream) out =
               )
     in
       builtins := M.add "-input" builtin__input !builtins
-
 
   (* default action *)
   and default = function
@@ -691,7 +692,6 @@ let preprocess (charstream: charstream) out =
   in 
     init();
     loop()
-
 
 let _ = 
   let l = Array.length Sys.argv in
