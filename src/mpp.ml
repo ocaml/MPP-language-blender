@@ -75,13 +75,13 @@ let actions : action_set ref = ref M.empty
 module Char_set =
 struct
   include Set.Make(Char) 
-  let of_list l =
+  let set_of_list l =
     List.fold_left (fun r e -> add e r) empty l 
 end
 
-let newline_chars = Char_set.of_list ['\n'; '\r']
-let space_chars = Char_set.of_list [' '; '\t']
-let blank_chars = Char_set.of_list ['\n'; '\r';' '; '\t']
+let newline_chars = Char_set.set_of_list ['\n'; '\r']
+let space_chars = Char_set.set_of_list [' '; '\t']
+let blank_chars = Char_set.set_of_list ['\n'; '\r';' '; '\t']
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 
   fun ?start:start ?msg:message (location:location) ->
@@ -233,7 +233,7 @@ let charstream_of_string : ?location:location -> string -> charstream = fun ?(lo
 let match_token token charstream =
   if debug then 
     (let _filename, _line, _col = charstream.where () in
-       Printf.printf "<token=%s@%d-%d----'%s'>\n%!" token _line _col (charstream_peek ~n:20 charstream));
+       Printf.eprintf "<token=%s@%d-%d----'%s'>\n%!" token _line _col (charstream_peek ~n:20 charstream));
   let rec loop i taken =
     if i >= String.length token then
       true, []
@@ -258,12 +258,12 @@ let _x _  =
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)" in 
     for i = 0 to String.length l - 1 do
       let s = String.sub l i (String.length l - i) in
-        Printf.printf "%b-" 
+        Printf.eprintf "%b-" 
           (match_token
-              "*/"
-              (charstream_of_string s))
+             "*/"
+             (charstream_of_string s))
     done;
-    Printf.printf "\n%!";;
+    Printf.eprintf "\n%!";;
 
 let _x _ =
   match_token
@@ -283,12 +283,12 @@ let rec eat (cs:Char_set.t) charstream =
 
 
 let read_until ?(failsafe=false) c charstream =
-  if debug then Printf.printf "read_until '%s'\n%!" (Char.escaped c);
+  if debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with
       | Some z ->
-  let () = if debug then Printf.printf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
+  let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
           if c = z then
             begin
               charstream.push z;
@@ -310,7 +310,7 @@ let read_until ?(failsafe=false) c charstream =
   in loop ()
 
 let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Char_set.t) ?(exclude=Char_set.empty) ?(expect:string option) charstream =
-  if debug then Printf.printf "read_until_one_of <%s>\n%!" (Char_set.fold (fun c r -> Printf.sprintf "%s%s;" r (Char.escaped c)) cs ""); 
+  if debug then Printf.eprintf "read_until_one_of <%s>\n%!" (Char_set.fold (fun c r -> Printf.sprintf "%s%s;" r (Char.escaped c)) cs ""); 
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with
@@ -347,7 +347,7 @@ let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Char_set.t) ?(exc
 
 (* This has to be patched to accept other integers than natural numbers. *)
 let parse_int charstream =
-  if debug then Printf.printf "parse_int\n%!";
+  if debug then Printf.eprintf "parse_int\n%!";
 (*   let start = charstream.where() in *)
   let res = Buffer.create 42 in
   let rec loop () =
@@ -363,7 +363,7 @@ let parse_int charstream =
 
 (* Parses a string in the format "([^\\]|(\\\\)|(\\\"))*" *)
 let parse_string charstream =
-  if debug then Printf.printf "parse_string\n%!";
+  if debug then Printf.eprintf "parse_string\n%!";
   (* We assume that a '"' character has just been consumed. *)
   let start = charstream.where() in
   let res = Buffer.create 42 in
@@ -468,7 +468,7 @@ let plop =
 
 
 let exec_command cmd arguments location =
-  if debug then Printf.printf "exec_command\n%!";
+  if debug then Printf.eprintf "exec_command\n%!";
   match Sys.command (cmd ^ arguments) with
     | 0 -> ()
     | rc ->
@@ -477,8 +477,7 @@ let exec_command cmd arguments location =
         cmd
         rc
 
-(* *********************************************************** *)
-(* **begin library ******************************************* *)
+
 let cat filename =
   if Sys.file_exists filename then
     let i = open_in filename in
@@ -486,15 +485,7 @@ let cat filename =
         print_char (input_char i)
       done with End_of_file -> ()
 
-let command arg charstream =
-  let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
-  let otmp = open_out tmp in
-    output_charstream otmp charstream;
-    ignore(Sys.command ("cat " ^ tmp ^ " | " ^ arg));
-    Sys.remove tmp
-
-let builtins : action_set ref =
-  let cmd = Function command in
+let builtins : action_set =
   let echo =
     Function(fun a _ -> print_endline a) in
   let cat  =
@@ -515,12 +506,10 @@ let builtins : action_set ref =
   let set_close_comments_token = 
     Function(fun x _ -> close_comments_token := x)
   in
-  let res =
     List.fold_left
       (fun r (k,e) -> M.add k e r)
       M.empty
       [
-        "-cmd", cmd; 
         "-echo", echo; 
         "-cat", cat;
         "-setopen", set_opentoken;
@@ -529,22 +518,19 @@ let builtins : action_set ref =
         "-setopencomments", set_open_comments_token;
         "-setclosecomments", set_close_comments_token;
       ]
-  in ref res
 
-(* **end library ******************************************* *)
-(* *********************************************************** *)
 
 let lookup_builtin action_name =
-  match M.find action_name !builtins with
+  match M.find action_name builtins with
     | Function f -> f
     | Command s -> failwith "Command not yet implemented."
 
 let exec (action_name:string) (arguments:string) (charstream:charstream) =
-  if debug then Printf.printf "exec: %!";
+  if debug then Printf.eprintf "exec: %!";
   (* action_name : thing to do;
      arguments   : arguments on the first line;
      charstream  : what follows the first line (if any). *)
-  if debug then Printf.printf "action_name:<%s> arguments:<%s>"
+  if debug then Printf.eprintf "action_name:<%s> arguments:<%s>"
     action_name arguments;
   if action_name.[0] = '-' then
     lookup_builtin action_name arguments charstream
@@ -565,7 +551,7 @@ let preprocess (charstream: charstream) =
     (*     begin match charstream.take () with *)
     (*       | None -> () *)
     (*       | Some c -> *)
-    (*           Printf.printf "[%s]" (Char.escaped c); *)
+    (*           Printf.eprintf "[%s]" (Char.escaped c); *)
     (*           charstream.push c; *)
     (*     end; *)
     begin
@@ -583,22 +569,11 @@ let preprocess (charstream: charstream) =
         default (charstream.take())
     end
 
-  and init() = 
-    let builtin__input =
-      Function(fun arg cs ->
-        let x = open_in arg in
-          charstream.insert (charstream_of_inchannel arg x);
-          loop();
-          close_in x
-      )
-    in
-      builtins := M.add "-input" builtin__input !builtins
-
   (* default action *)
   and default = function
     | None -> ()
     | Some c ->
-        (* Printf.printf "<%s>%!" (Char.escaped c); *)
+        (* Printf.eprintf "<%s>%!" (Char.escaped c); *)
         print_char c;
         flush stdout;
         loop()
@@ -617,7 +592,7 @@ let preprocess (charstream: charstream) =
     in
     let () = 
       if debug then 
-        Printf.printf "peek<%s>\n%!"
+        Printf.eprintf "peek<%s>\n%!"
           (charstream_peek ~n:20 charstream) 
     in
     let block_name = (* block_name: syntactic "tool" *)
@@ -631,7 +606,7 @@ let preprocess (charstream: charstream) =
             None
         | Some c ->
             charstream.push c;
-            let () = if debug then Printf.printf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
+            let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
       Some (read_until ~failsafe:true ' ' charstream)
   in
   let () = eat space_chars charstream in
@@ -640,7 +615,7 @@ let preprocess (charstream: charstream) =
     (* the contents of the block *)
     match block_name with
       | Some name -> 
-          if debug then Printf.printf "name=<%s>%!" name;
+          if debug then Printf.eprintf "name=<%s>%!" name;
           read_until_word charstream (name^ !close_token)
       | None -> read_until_word charstream (!close_token)
   in
@@ -679,33 +654,40 @@ and close_token_action () =
 (* Just ignore what has to be ignored. *)
 and endline_comments_token_action () =
   let _l = read_until_one_of newline_chars charstream in
-    if debug then Printf.printf  "comments: <%s>\n%!" _l;
+    if debug then Printf.eprintf  "comments: <%s>\n%!" _l;
     loop()
 
 (* New comment block. *)
 and open_comments_token_action () = 
   let _c = read_until_word charstream (!close_comments_token) in
-    if debug then Printf.printf  "comments: <%s>\n%!" _c;
+    if debug then Printf.eprintf  "comments: <%s>\n%!" _c;
     loop()
 
 (* Closing a comment block that hasn't been opened is wrong. *)
 and close_comments_token_action () = 
   parse_error ~msg:"Closing unopened comments block." (charstream.where());
   exit 1
-in
-  init();
-  loop()
+in 
+  loop ()
 
 
 let _ = 
-  if Array.length Sys.argv > 1 then 
+  let l = Array.length Sys.argv in
     try
-(*       Printf.printf "plop...\n%!"; *)
-      preprocess (charstream_of_inchannel Sys.argv.(1) (open_in Sys.argv.(1)));
-(*       Printf.printf "...end.\n%!" *)
-    with e -> 
+      if l > 1 then 
+        for i = 1 to l - 1 do
+          if
+            try Filename.chop_extension Sys.argv.(i) ^ ".mpp" = Sys.argv.(i)
+            with Invalid_argument -> false 
+          then
+            Printf.eprintf "Warning: filename <%s> does not have .mpp extension.\n%!" Sys.argv.(i);
+          preprocess (charstream_of_inchannel Sys.argv.(i) (open_in Sys.argv.(i)))
+        done
+      else
+        preprocess (charstream_of_inchannel "/dev/stdin" stdin);
+    with e ->
       Printexc.print_backtrace stdout;
-      Printf.printf "Exception raised: <%s>\nBacktrace:%!" (Printexc.to_string e)
+      Printf.eprintf "Exception raised: <%s>\nBacktrace:%!" (Printexc.to_string e)
 
 
 
