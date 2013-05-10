@@ -678,7 +678,7 @@ let _ =
         for i = 1 to l - 1 do
           if
             try Filename.chop_extension Sys.argv.(i) ^ ".mpp" = Sys.argv.(i)
-            with Invalid_argument -> false 
+            with Invalid_argument _ -> false 
           then
             Printf.eprintf "Warning: filename <%s> does not have .mpp extension.\n%!" Sys.argv.(i);
           preprocess (charstream_of_inchannel Sys.argv.(i) (open_in Sys.argv.(i)))
