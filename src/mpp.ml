@@ -60,7 +60,6 @@ let output_charstream out c =
       | Some c -> output_char out c; loop()
   in loop()
 
-
 module M = Map.Make(String)
 type set = string M.t
 type action =
@@ -485,12 +484,16 @@ let cat out filename =
       try while true do
         output_char out (input_char i)
       done with End_of_file -> ()
-
+  else
+    Printf.fprintf out
+      "builtin cat error: file <%s> doesn't exist.\n%!"
+      filename
 
 let command arg charstream _out =
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
     output_charstream otmp charstream;
+    close_out otmp;
     ignore(Sys.command ("cat " ^ tmp ^ " | " ^ arg));
     Sys.remove tmp
 
@@ -528,9 +531,9 @@ end
 let builtins : action_set ref =
   let cmd = Function command in
   let echo =
-    Function(fun a _cs out -> output_string out a; output_char out '\n') in
+    Function(fun a _cs out -> output_string out a) in
   let cat =
-    Function(fun filename _cs out -> cat out filename) 
+    Function(fun filename _cs out -> cat out filename; flush out)
   in
   let set = Function(Variable.set) in
   let unset = Function(Variable.unset) in
