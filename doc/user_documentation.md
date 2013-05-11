@@ -1,4 +1,4 @@
-# MPP: Meta Pre Processor (user documentation)
+### MPP: Meta Pre Processor (user documentation)
 -------------------------------------------------------------------
 
 MPP is a generic and parametric meta pre processor for text files.
