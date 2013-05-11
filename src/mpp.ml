@@ -574,6 +574,9 @@ let builtins : action_set ref =
 (* **end library ********************************************* *)
 (* *********************************************************** *)
 
+let list_builtins () =
+  M.iter (fun k _v -> Printf.printf "%s\n" k) !builtins;
+  Pervasives.exit 0
 
 let lookup_builtin action_name =
   match M.find action_name !builtins with
@@ -772,9 +775,10 @@ let _ =
       if l > 1 then
         Arg.parse
           (Arg.align [
-             "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
-             "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-             "--", Arg.Rest(process_one_file), " Use this option if you have filenames that begin with a dash.";
+             "-overwrite", Arg.Set(overwrite), "Overwrite existing destination files.";
+             "-continue", Arg.Set(continue), "Continue even if an input file doesn't exist.";
+             "-builtins", Arg.Unit(list_builtins), "List builtins.";
+             "--", Arg.Rest(process_one_file), "Use this option if you have filenames that begin with a dash.";
            ])
           process_one_file
           ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]\nIf a filename doesn't have .mpp extension, it will output on stdout. If a file exists, it won't be overwritten unless you specify -overwrite. If you want to overwrite only certain files, you should invoke this programme separately.\nList of options:")
@@ -783,3 +787,7 @@ let _ =
     with e ->
       Printexc.print_backtrace stderr;
       Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e)
+
+
+
+
