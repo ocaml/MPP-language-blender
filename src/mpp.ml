@@ -778,10 +778,15 @@ let _ =
       if l > 1 then
         Arg.parse
           (Arg.align [
-             "-overwrite", Arg.Set(overwrite), "Overwrite existing destination files.";
-             "-continue", Arg.Set(continue), "Continue even if an input file doesn't exist.";
-             "-builtins", Arg.Unit(list_builtins), "List builtins.";
-             "--", Arg.Rest(process_one_file), "Use this option if you have filenames that begin with a dash.";
+             "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
+             "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+             "-builtins", Arg.Unit(list_builtins), " List builtins.";
+             "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
+             "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
+             "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
+             "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
+             "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
+             "--", Arg.Rest(process_one_file), " All remaining arguments are considered as filenames.";
            ])
           process_one_file
           ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]\nIf a filename doesn't have .mpp extension, it will output on stdout. If a file exists, it won't be overwritten unless you specify -overwrite. If you want to overwrite only certain files, you should invoke this programme separately.\nList of options:")
