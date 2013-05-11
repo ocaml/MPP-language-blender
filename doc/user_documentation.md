@@ -17,7 +17,7 @@ MPP is meta because it is designed to allow you to build a simple preprocessor f
 
 
 
-<code>
+<pre>
 open token: user-defined (here: [[)
  if the token is followed by a space, it is ignored; 
  ethis allows to easily use "let" as a token!
@@ -35,4 +35,4 @@ variables: declaration, assignment, deletion
 file inclusion: verbatim or interpreted
 
 no escaping: it *has* to be *unnecessary*
-</code>
+</pre>
