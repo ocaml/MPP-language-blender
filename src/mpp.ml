@@ -282,7 +282,7 @@ let rec eat (cs:Char_set.t) charstream =
           charstream.push c            
 
 
-let read_until ?(failsafe=false) c charstream =
+let read_until ?(failsafe=false) c charstream : string =
   if debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =
@@ -495,6 +495,36 @@ let command arg charstream _out =
     Sys.remove tmp
 
 
+module Variable : sig
+  val set: string -> charstream -> 'ignored -> unit
+  val get: string -> charstream -> out_channel -> unit
+  val unset: string -> charstream -> 'ignored -> unit
+  val unsetall: 'string -> 'charstream -> 'out_channel -> unit
+end = struct
+  include Map.Make(String)
+  let env = ref empty
+  let unsetall _s _cs _out = env := empty
+  let set s cs _ =
+    let css = charstream_of_string s in
+    let variable =
+      read_until_one_of space_chars css
+    in
+    let value = string_of_charstream css ^ string_of_charstream cs in
+      env := add variable value !env
+  let get s cs out =
+    try
+      output_string out (find s !env)
+    with Not_found ->
+      let f, l, c = cs.where() in
+      failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+  let unset s cs _ =
+    try
+      env := remove s !env
+    with Not_found ->
+      let f, l, c = cs.where() in
+        failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+end
+
 let builtins : action_set ref =
   let cmd = Function command in
   let echo =
@@ -502,6 +532,10 @@ let builtins : action_set ref =
   let cat =
     Function(fun filename _cs out -> cat out filename) 
   in
+  let set = Function(Variable.set) in
+  let unset = Function(Variable.unset) in
+  let unsetall = Function(Variable.unsetall) in
+  let get = Function(Variable.get) in    
   let set_opentoken =
     Function(fun x _cs _out -> open_token := x)
   in
@@ -522,6 +556,10 @@ let builtins : action_set ref =
       (fun r (k,e) -> M.add k e r)
       M.empty
       [
+        "-set", set;
+        "-get", get;
+        "-unset", unset;
+        "-unsetall", unsetall;
         "-cmd", cmd; 
         "-echo", echo; 
         "-cat", cat;
@@ -745,7 +783,3 @@ let _ =
     with e ->
       Printexc.print_backtrace stderr;
       Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e)
-
-
-
-
