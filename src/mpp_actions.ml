@@ -94,18 +94,18 @@ let builtins : action_set ref =
       (fun r (k,e) -> Mpp_stringmap.add k e r)
       Mpp_stringmap.empty
       [
-        "-set", set;
-        "-get", get;
-        "-unset", unset;
-        "-unsetall", unsetall;
-        "-cmd", cmd; 
-        "-echo", echo; 
-        "-cat", cat;
-        "-setopen", set_opentoken;
-        "-setclose", set_closetoken;
-        "-setendlinecomments", set_endline_comments_token;
-        "-setopencomments", set_open_comments_token;
-        "-setclosecomments", set_close_comments_token;
+        "set", set;
+        "get", get;
+        "unset", unset;
+        "unsetall", unsetall;
+        "cmd", cmd; 
+        "echo", echo; 
+        "cat", cat;
+        "setopen", set_opentoken;
+        "setclose", set_closetoken;
+        "setendlinecomments", set_endline_comments_token;
+        "setopencomments", set_open_comments_token;
+        "setclosecomments", set_close_comments_token;
       ]
   in ref r
 
@@ -117,19 +117,40 @@ let list_builtins () =
   Mpp_stringmap.iter (fun k _v -> Printf.printf "%s\n" k) !builtins;
   Pervasives.exit 0
 
-let lookup_builtin action_name =
-  match Mpp_stringmap.find action_name !builtins with
-    | Function f -> f
-    | Command s -> failwith "Command not yet implemented."
+let lookup_builtin action_name location =
+  try
+    match Mpp_stringmap.find action_name !builtins with
+      | Function f -> f
+      | Command s -> failwith "Command not yet implemented."
+  with Not_found ->
+    if !ignore_errors then
+      begin
+        fun _ _ _ -> ()
+      end
+    else
+      begin
+        parse_error
+          ~msg:(Printf.sprintf "Action <%s> not found!" action_name)
+          location;
+        Pervasives.exit 1
+      end
+
 
 let exec (action_name:string) (arguments:string) (charstream:charstream) (out:out_channel) =
-  if debug then Printf.eprintf "exec: %!";
-  (* action_name : thing to do;
-     arguments   : arguments on the first line;
-     charstream  : what follows the first line (if any). *)
-  if debug then Printf.eprintf "action_name:<%s> arguments:<%s>"
-    action_name arguments;
-  if action_name.[0] = '-' then
-    (lookup_builtin action_name) arguments charstream out
+  if debug then 
+    begin
+      Printf.eprintf "exec: %!";
+      (* action_name : thing to do; arguments : arguments on the first
+         line; charstream : what follows the first line (if any). *)
+      Printf.eprintf "action_name:<%s> arguments:<%s>\n%!"
+        action_name arguments;
+    end;
+  if action_name.[0] <> '-' then
+    (lookup_builtin action_name (charstream.where())) arguments charstream out
   else
-    failwith "General exec not yet implemented."
+    begin
+      (lookup_builtin "cmd" (charstream.where()))
+        (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ arguments)
+        charstream out;
+      if debug then Printf.eprintf "???%!";
+    end
