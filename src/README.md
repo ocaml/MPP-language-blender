@@ -1,4 +1,4 @@
-To compile the sources, you need OCaml (3.12 or 4.xx.x) and Make.
+To compile the sources, you need OCaml 4 (it *might* work with 3.12) and Make.
 
 You may simply compile the sources with the following command:
 <code>make mpp</code>
