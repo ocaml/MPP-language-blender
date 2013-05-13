@@ -1,9 +1,9 @@
 # Default is the bytecode version because it takes less time to compile.
 mpp:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_stringmap.cmo mpp_actions.cmo mpp_core.cmo mpp_libload.cmo mpp_load.cmo mpp_variables.cmo mpp_main.cmo
-	ocamlc -o $@ $+
+	ocamlc -g -o $@ $+
 
 mpp.opt:mpp_charset.cmx mpp_init.cmx mpp_charstream.cmx mpp_stringmap.cmx mpp_actions.cmx mpp_core.cmx mpp_libload.cmx mpp_load.cmx mpp_variables.cmx mpp_main.cmx
-	ocamlopt -o $@ $+
+	ocamlopt -g -o $@ $+
 
 all:mpp mpp.out
 
