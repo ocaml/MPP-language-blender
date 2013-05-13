@@ -1,9 +1,11 @@
 
-let debug = true
-let debug = false
+let debug = 
+  try ignore(Sys.getenv "DEBUG") ; true with _ -> false
 
 exception Exit of int
 let exit i = raise (Exit i)
+
+let ignore_errors = ref false
 
 (* tokens *)
 let open_token = ref "[["
