@@ -22,6 +22,9 @@ Currently (at the time this is being written), there is one kind of action block
 
 <code>
 [[ echo Hello World ]] ==> replaced by "Hello World " without the double quotes (note that there is a space following "World" because there is one in the command).
+</code>
+
+<code>
 [[ -echo Hello World]] ==> replaced by "Hello World\n" without the double quotes (note that the Unix "echo" command adds a new line at the end).
 </code>
 
