@@ -90,23 +90,33 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
             begin match message with
               | None -> 
                   Printf.eprintf
-                    "Error file:<%s> line:%d column:%d.\n%!"
+                    "Error in %s:%d:%d.\n%!"
                     f l c
               | Some m ->
                   Printf.eprintf
-                    "Error <%s> file:<%s> line:%d column:%d.\n%!"
+                    "Error: %s\nIn %s:%d:%d.\n%!"
                     m f l c
             end
         | Some(filename,line,column) ->
             begin match message with
-              | None -> 
-                  Printf.eprintf
-                    "Error file<:%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
-                    filename line column f l c
+              | None ->
+                  if l <> 0 && c <> 0 then
+                    Printf.eprintf
+                      "Error from %s:%d:%d to %s:%d:%d.\n%!"
+                      filename line column f l c
+                  else
+                    Printf.eprintf
+                      "Error from %s:%d:%d to end of file.\n%!"
+                      filename line column
               | Some m ->
-                  Printf.eprintf
-                    "Error <%s> file:<%s> line:%d column:%d to file:<%s> line:%d column:%d.\n%!"
-                    m filename line column f l c 
+                  if l <> 0 && c <> 0 then
+                    Printf.eprintf
+                      "Error: %s\nFrom %s:%d:%d to %s:%d:%d.\n%!"
+                      m filename line column f l c
+                  else
+                    Printf.eprintf
+                      "Error: %s\nFrom %s:%d:%d to end of file.\n%!"
+                      m filename line column
             end
 
 let charstream_peek ?(n=1) charstream =
@@ -174,7 +184,7 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   in
   let rec where () =
     match !csl with
-      | [] -> "very end of file", 0, 0
+      | [] -> "<end of file>", 0, 0
       | e::_ -> e.where()
   in
   let rec take () =
@@ -741,6 +751,8 @@ let _ =
   let l = Array.length Sys.argv in
   let overwrite = ref false in
   let continue = ref false in
+  let defaultoutput = ref "" in
+  let at_least_one_file_processed = ref false in
   let process_one_file filename =
     if not(Sys.file_exists filename) then
       begin
@@ -754,47 +766,68 @@ let _ =
       if
         try Filename.chop_extension filename ^ ".mpp" = filename
         with Invalid_argument _ -> false
-      then
-        begin
-          let outputfilename = Filename.chop_extension filename in
-            if Sys.file_exists outputfilename then
-              begin
-                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
-                  outputfilename
-              end
-            else
-              begin
-                let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
-                  preprocess (charstream_of_inchannel filename (open_in filename)) out
-              end
-        end
-      else
-        begin
-          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
-          preprocess (charstream_of_inchannel filename (open_in filename)) stdout
-        end
-  in
-    try
-      if l > 1 then
-        Arg.parse
-          (Arg.align [
-             "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
-             "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-             "-builtins", Arg.Unit(list_builtins), " List builtins.";
-             "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
-             "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
-             "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
-             "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
-             "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
-             "--", Arg.Rest(process_one_file), " All remaining arguments are considered as filenames.";
-           ])
-          process_one_file
-          ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]\nIf a filename doesn't have .mpp extension, it will output on stdout. If a file exists, it won't be overwritten unless you specify -overwrite. If you want to overwrite only certain files, you should invoke this programme separately.\nList of options:")
-      else
-        preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
-    with e ->
-      Printexc.print_backtrace stderr;
-      Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e)
+          then
+            begin
+              let outputfilename =
+                if !defaultoutput = "" then
+                  Filename.chop_extension filename 
+                else
+                  !defaultoutput
+              in
+                if Sys.file_exists outputfilename then
+                  begin
+                    Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
+                      outputfilename
+                  end
+                else
+                  begin
+                    let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
+                      preprocess (charstream_of_inchannel filename (open_in filename)) out;
+                      at_least_one_file_processed := true
+                  end
+            end
+          else
+            begin
+              Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
+              preprocess (charstream_of_inchannel filename (open_in filename)) stdout;
+              at_least_one_file_processed := true
+            end
+      in
+        try
+          if l > 1 then
+            begin
+              Arg.parse
+                (Arg.align [
+                  "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
+                  "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
+                  "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+                  "-builtins", Arg.Unit(list_builtins), " List builtins.";
+                  "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
+                  "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
+                  "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
+                  "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
+                  "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
+                  "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
+                ])
+                process_one_file
+                ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
+~ If a file name doesn't have .mpp extension, it will output on stdout.
+~ If a file already exists, it won't be overwritten unless you use -overwrite.
+~ If you want to overwrite only certain files, you should invoke this programme separately.
+~ If you don't give any file name, it will use standard input (/dev/stdin).
+~ This software does not care about characters encoding, hence it performs no conversion at all.
+~ As of May, 13th, 2013, this software is still under development. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
+
+List of options:")
+            end;
+          if not !at_least_one_file_processed then
+            preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
+        with e ->
+            if debug then Printexc.print_backtrace stderr;
+            if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
+            Pervasives.exit 1
+
+
 
 
 
