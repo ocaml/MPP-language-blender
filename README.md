@@ -1,5 +1,4 @@
-MPP-language-blender
-====================
+# MPP-language-blender
 
 MPP is a meta pre processor. It works by helping you combine different
 programming  languages and tools  in order  to pre-process  the source
@@ -22,3 +21,17 @@ to combining different languages.
 
 As MPP is a pre processor, you should think of the "additional" languages
 as pre processor languages. 
+
+
+# Log
+
+* 13 May 2013: clean up on entire repository.
+* 13 May 2013: software architecture refactoring.
+* 13 May 2013: new features. Special commands don't start with a dash anymore: a dash is now for shell commands.
+* 9-12 May 2013: improvements.
+* 8 May 2013: MPP is born (it compiles and started preprocessing stuff)
+* late April 2013: This project is still in development.
+* late April 2013: The implementation is on-going work.
+* late April 2013: The specifications are not frozen.
+
+
