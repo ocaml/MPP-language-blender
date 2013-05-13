@@ -22,7 +22,10 @@ open Mpp_charstream
 open Mpp_init
 open Mpp_actions
 
-let preprocess (charstream: charstream) out =
+
+
+
+let rec preprocess (charstream: charstream) out =
   assert(!open_token <> "");
   assert(!close_token <> "");
   assert(!endline_comments_token <> "");
@@ -45,17 +48,6 @@ let preprocess (charstream: charstream) out =
       else
         default (charstream.take())
     end
-
-  and init() =
-    let builtin__input =
-      Function(fun arg cs _out ->
-        let x = open_in arg in
-          charstream.insert (charstream_of_inchannel arg x);
-          loop();
-          close_in x
-      )
-    in
-      builtins := Mpp_stringmap.add "-input" builtin__input !builtins
 
   (* default action *)
   and default = function
@@ -159,11 +151,27 @@ let preprocess (charstream: charstream) out =
   and close_comments_token_action() = 
     parse_error ~msg:"Closing unopened comments block." (charstream.where());
     exit 1
+
   in 
-    init();
     loop()
 
+
+
+let init() =
+  (* This is here because the input builtin needs to access the
+     preprocess function.  *)
+  let builtin__input =
+    Function(fun arg cs out ->
+      let x = open_in arg in
+        cs.insert (charstream_of_inchannel arg x);
+        preprocess cs out;
+        close_in x
+    )
+  in
+    builtins := Mpp_stringmap.add "input" builtin__input !builtins
+
 let _ = 
+  let () = init() in
   let l = Array.length Sys.argv in
   let overwrite = ref false in
   let continue = ref false in
@@ -240,9 +248,9 @@ List of options:")
           if not !at_least_one_file_processed then
             preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
         with e ->
-            if debug then Printexc.print_backtrace stderr;
-            if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
-            Pervasives.exit 1
+          if debug then Printexc.print_backtrace stderr;
+          if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
+          Pervasives.exit 1
 
 
 
