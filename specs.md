@@ -88,3 +88,11 @@ project-name.
 Shell command
 
 Functions
+
+
+## Technical requirements
+
+* well-located error messages.
+* escaping characters or tokens should be unnecessary at all times.
+* ... 
+* 
