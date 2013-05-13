@@ -78,7 +78,11 @@ let charstream_peek ?(n=1) charstream =
     done;
     let res = Buffer.contents b in
       for i = !limit - 1 downto 0 do
-        try charstream.push res.[i] with _ -> assert false
+        let x = res.[i] in
+          charstream.push x
+            (* try charstream.push x with e ->  *)
+(*               Printf.printf "WTF: %s%!\n" (Printexc.to_string e); *)
+(*               assert false *)
       done;
       res
 
@@ -95,7 +99,7 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   in
   let where () =
     match !column with
-      | [] -> assert false
+      | [] -> filename, !line, 0 (* assert false *)
       | c::_ -> filename, !line, c
   in
   let take () =
@@ -156,9 +160,12 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
                   begin
                     decr line;
                     match !column with
-                      | [] -> assert false; (* If this happens, either this block is broken 
-                                               or too many characters have been pushed back,
-                                               in both cases the program is broken and has to be fixed. *)
+                      | [] -> 
+                          column := [0]
+                            (* assert false; *)
+                          (* If this happens, either this block is broken 
+                             or too many characters have been pushed back,
+                             in both cases the program is broken and has to be fixed. *)
                       | _::tl -> column := tl
                   end
               | _ ->
@@ -229,7 +236,11 @@ let read_until ?(failsafe=false) c charstream : string =
   let rec loop () =
     match charstream.take() with
       | Some z ->
-          let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
+          let () =
+            if debug then 
+              Printf.eprintf "Peek<%s>\n%!"
+                (String.escaped (charstream_peek ~n:20 charstream)) 
+          in
             if c = z then
               begin
                 charstream.push z;
@@ -251,7 +262,7 @@ let read_until ?(failsafe=false) c charstream : string =
   in loop ()
 
 let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
-  if debug then Printf.eprintf "read_until_one_of <%s>\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s;" r (Char.escaped c)) cs ""); 
+  if debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with

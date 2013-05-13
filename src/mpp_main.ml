@@ -49,11 +49,11 @@ let preprocess (charstream: charstream) out =
   and init() =
     let builtin__input =
       Function(fun arg cs _out ->
-                 let x = open_in arg in
-                   charstream.insert (charstream_of_inchannel arg x);
-                   loop();
-                   close_in x
-              )
+        let x = open_in arg in
+          charstream.insert (charstream_of_inchannel arg x);
+          loop();
+          close_in x
+      )
     in
       builtins := Mpp_stringmap.add "-input" builtin__input !builtins
 
@@ -74,27 +74,30 @@ let preprocess (charstream: charstream) out =
         | Some c -> charstream.push c; `Nested
         | None ->
             parse_error
-              ~msg:"No characters left to read right after an opening!" 
+              ~msg:"No characters left to read right after an opening! (1)" 
               (charstream.where());
             exit 1
     in
     let () = 
       if debug then 
         Printf.eprintf "peek<%s>\n%!"
-          (charstream_peek ~n:20 charstream) 
+          (String.escaped (charstream_peek ~n:20 charstream))
     in
     let block_name = (* block_name: syntactic "tool" *)
       match charstream.take() with
         | None ->
             parse_error
-              ~msg:"No characters left to read right after an opening!" 
+              ~msg:"No characters left to read right after an opening! (2)" 
               (charstream.where());
             exit 1
         | Some (' ' | '\t') ->
             None
         | Some c ->
             charstream.push c;
-            let () = if debug then Printf.eprintf "peek<%s>\n%!" (charstream_peek ~n:20 charstream) in
+            let () = 
+              if debug then Printf.eprintf "peek<%s>\n%!"
+                (String.escaped (charstream_peek ~n:20 charstream))
+            in
               Some (read_until ~failsafe:true ' ' charstream)
     in
     let () = eat space_chars charstream in
@@ -126,10 +129,11 @@ let preprocess (charstream: charstream) out =
             blockcharstream.push c;
             read_until_one_of ~failsafe:true newline_chars blockcharstream
         | None ->
-            parse_error
-              ~msg:"No characters left to read right after an opening!"
-              (blockcharstream.where());
-            exit 1
+            (*             parse_error *)
+            (*               ~msg:"Couldn't read the arguments of the current action." *)
+            (*               (blockcharstream.where()); *)
+            (*             exit 1 *)
+            ""
     in
       exec action_name action_arguments blockcharstream out;
       loop ()
@@ -213,6 +217,7 @@ let _ =
                   "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
                   "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
                   "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+                  "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
                   "-builtins", Arg.Unit(list_builtins), " List builtins.";
                   "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
                   "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
