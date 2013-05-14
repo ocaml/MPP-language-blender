@@ -13,6 +13,12 @@ mpp:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_stringmap.cmo mpp_action
 mpp.opt:mpp_charset.cmx mpp_init.cmx mpp_charstream.cmx mpp_stringmap.cmx mpp_actions.cmx mpp_core.cmx mpp_libload.cmx mpp_load.cmx mpp_variables.cmx mpp_main.cmx
 	ocamlopt -g -o $@ $+
 
+
+# This one is still very experimental:
+mpp-ocaml-toplevel-output:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_ocaml_toplevel_error_formatting.cmo
+	ocamlc -g -o $@ $+
+
+
 all:mpp mpp.out
 
 %.cmo:%.ml
