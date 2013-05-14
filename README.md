@@ -25,6 +25,7 @@ as pre processor languages.
 
 # Log
 
+* 14 May 2013: new target in Makefile, for future templating-related features.
 * 13 May 2013: clean up on entire repository.
 * 13 May 2013: software architecture refactoring.
 * 13 May 2013: new features. Special commands don't start with a dash anymore: a dash is now for shell commands.
