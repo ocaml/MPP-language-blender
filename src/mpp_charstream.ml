@@ -73,6 +73,14 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
             end
 
 
+let charstream_take_n n charstream =
+  let b = Buffer.create n in
+    for i = 1 to n do
+      match charstream.take() with
+        | None -> ()
+        | Some c -> Buffer.add_char b c
+    done;
+    Buffer.contents b
 
 let charstream_peek ?(n=1) charstream =
   let limit = ref n in
@@ -355,17 +363,21 @@ let parse_string charstream =
 
 
 (* Reads until an exact word is found. *)
-let read_until_word ?(failsafe=false) charstream word =
+let read_until_word ?(failsafe=false) ?(success=ref true) charstream word =
   assert(word<>"");
   let start_location = charstream.where() in
   let res = Buffer.create (String.length word * 8) in
   let buf = Buffer.create (String.length word) in
   let rec loop i =
     if i >= String.length word then
-      Buffer.contents res
+      begin
+        success := true;
+        Buffer.contents res
+      end
     else
       match charstream.take() with
         | None ->
+            success := false;
             if failsafe then
               Buffer.contents res
             else
