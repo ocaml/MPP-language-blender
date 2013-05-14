@@ -34,4 +34,11 @@ as pre processor languages.
 * late April 2013: The implementation is on-going work.
 * late April 2013: The specifications are not frozen.
 
+# Licence
 
+MPP is under the CeCILL-B licence. You may find its whole text here:
+http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html 
+
+CeCILL-B is a BSD-like licence. So, basically, I believe it means you can do almost whatever you want with the source code of MPP.
+
+However, if you find it useful or have some comments, please let me know by dropping me an email philippe.wang@cl.cam.ac.uk :-)
