@@ -226,6 +226,7 @@ let _ =
                   "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
                   "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
                   "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
+                  "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (exec=when you call an external programme).";
                   "-builtins", Arg.Unit(list_builtins), " List builtins.";
                   "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
                   "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
