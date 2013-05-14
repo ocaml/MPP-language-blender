@@ -16,7 +16,12 @@ let close_comments_token = ref "*/"
 
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
+
+(* [space_chars] is like the IFS Bash special variable, 
+   but this way of using it has not been tested yet. *)
 let space_chars = Mpp_charset.of_list [' '; '\t']
+
+(* [blank_chars] might not be used at all *)
 let blank_chars = Mpp_charset.of_list ['\n'; '\r';' '; '\t']
 
 

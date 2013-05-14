@@ -11,7 +11,7 @@ type action_set = action Mpp_stringmap.t
 
 let actions : action_set ref = ref Mpp_stringmap.empty
 
-
+let stop_on_exec_error = ref false
 
 (* *********************************************************** *)
 (* **begin library ******************************************* *)
@@ -27,12 +27,22 @@ let cat out filename =
       filename
 
 let command arg charstream _out =
+  let file, line, column = charstream.where() in
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
     output_charstream otmp charstream;
     close_out otmp;
-    ignore(Sys.command ("cat " ^ tmp ^ " | " ^ arg));
-    Sys.remove tmp
+    let ec = Sys.command ("cat " ^ tmp ^ " | " ^ arg) in
+      Sys.remove tmp;
+      match ec with
+        | 0 -> ()
+        | _ ->
+            if !stop_on_exec_error then
+              Pervasives.failwith 
+                (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
+                   arg ec file line column)
+            else
+              ()
 
 
 module Variable : sig
@@ -56,13 +66,13 @@ end = struct
       output_string out (find s !env)
     with Not_found ->
       let f, l, c = cs.where() in
-      failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+      Pervasives.failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
   let unset s cs _ =
     try
       env := remove s !env
     with Not_found ->
       let f, l, c = cs.where() in
-        failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+        Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
 end
 
 let builtins : action_set ref =
@@ -123,7 +133,7 @@ let lookup_builtin action_name location =
   try
     match Mpp_stringmap.find action_name !builtins with
       | Function f -> f
-      | Command s -> failwith "Command not yet implemented."
+      | Command s -> Pervasives.failwith "Command not yet implemented."
   with Not_found ->
     if !ignore_errors then
       begin

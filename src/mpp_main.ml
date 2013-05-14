@@ -20,8 +20,6 @@
 
 open Mpp_charstream
 open Mpp_init
-open Mpp_actions
-
 
 let rec preprocess (charstream: charstream) out =
   assert(!open_token <> "");
@@ -125,7 +123,7 @@ let rec preprocess (charstream: charstream) out =
             (*             exit 1 *)
             ""
     in
-      exec action_name action_arguments blockcharstream out;
+      Mpp_actions.exec action_name action_arguments blockcharstream out;
       loop ()
 
   (* Closing a block that hasn't been opened is wrong. *)
@@ -159,14 +157,14 @@ let init() =
   (* This is here because the input builtin needs to access the
      preprocess function.  *)
   let builtin__input =
-    Function(fun arg cs out ->
+    Mpp_actions.Function(fun arg cs out ->
       let x = open_in arg in
         cs.insert (charstream_of_inchannel arg x);
         preprocess cs out;
         close_in x
     )
   in
-    builtins := Mpp_stringmap.add "input" builtin__input !builtins
+    Mpp_actions.builtins := Mpp_stringmap.add "input" builtin__input !Mpp_actions.builtins
 
 let _ = 
   let () = init() in
@@ -225,7 +223,7 @@ let _ =
                   "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
                   "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
                   "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (\"exec\" means when you call external programmes).";
-                  "-builtins", Arg.Unit(list_builtins), " List builtins.";
+                  "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
                   "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
                   "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
                   "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
