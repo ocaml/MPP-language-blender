@@ -177,7 +177,7 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   in
     { take ; push ; insert ; where }
 
-let charstream_of_string : ?location:location -> string -> charstream = fun ?(location=("<<anon-string>>",0,0)) s ->
+let charstream_of_string  ?(location:location=("<anon-string>",0,0)) (s:string) : charstream =
   (*It's too inconvenient to keep an optimal complete version of this
     function, so I chose to rely on [charstream_of_inchannel], **for
     now**.  Also, it is not good to write the data in a
