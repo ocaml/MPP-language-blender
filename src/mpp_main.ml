@@ -23,8 +23,6 @@ open Mpp_init
 open Mpp_actions
 
 
-
-
 let rec preprocess (charstream: charstream) out =
   assert(!open_token <> "");
   assert(!close_token <> "");
@@ -46,7 +44,7 @@ let rec preprocess (charstream: charstream) out =
       else if match_token !close_comments_token charstream then
         close_comments_token_action()
       else
-        default (charstream.take())
+        default(charstream.take())
     end
 
   (* default action *)
@@ -226,7 +224,7 @@ let _ =
                   "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
                   "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
                   "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
-                  "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (exec=when you call an external programme).";
+                  "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (\"exec\" means when you call external programmes).";
                   "-builtins", Arg.Unit(list_builtins), " List builtins.";
                   "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
                   "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
