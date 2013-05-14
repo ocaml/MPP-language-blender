@@ -3,8 +3,10 @@ open Mpp_init
 
 
 type action =
-  | Function of (string -> charstream -> out_channel -> unit)
+  | Function of (action_name -> charstream -> out_channel -> unit)
   | Command of string
+and action_name = string
+
 type action_set = action Mpp_stringmap.t
 
 let actions : action_set ref = ref Mpp_stringmap.empty
