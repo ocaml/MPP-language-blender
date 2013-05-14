@@ -9,7 +9,7 @@
  * work yet! *)
 
 (* **********************************************************************
-   This block is intended to make this programme able to run on itself.
+   This block was intended to make this programme able to run on itself.
    **********************************************************************
    * [[ -setopen {{{]] {{{ -setclose }}}]] {{{ -setendlinecomments ###}}}
    * {{{ -setopencomments <<<}}}
