@@ -1,3 +1,11 @@
+#***********************************************************************
+#* Meta Pre Processor, a language blender                              *
+#* (c) 2013 by Philippe Wang <philippe.wang@cl.cam.ac.uk>              *
+#* Licence : CeCILL-B                                                  *
+#* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *
+#***********************************************************************
+
+
 # Default is the bytecode version because it takes less time to compile.
 mpp:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_stringmap.cmo mpp_actions.cmo mpp_core.cmo mpp_libload.cmo mpp_load.cmo mpp_variables.cmo mpp_main.cmo
 	ocamlc -g -o $@ $+
