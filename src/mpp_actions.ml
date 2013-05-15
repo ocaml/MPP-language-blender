@@ -56,6 +56,10 @@ module Variable : sig
   val get: string -> charstream -> out_channel -> unit
   val unset: string -> charstream -> 'ignored -> unit
   val unsetall: 'string -> 'charstream -> 'out_channel -> unit
+  val ifdef: string -> charstream -> out_channel -> unit
+  val ifndef: string -> charstream -> out_channel -> unit
+  val elzeifdef: string -> charstream -> out_channel -> unit
+  val elze: string -> charstream -> out_channel -> unit
 end = struct
   include Map.Make(String)
   let env = ref empty
@@ -79,6 +83,68 @@ end = struct
     with Not_found ->
       let f, l, c = cs.where() in
         Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+
+  let last_cond = ref true
+  let last_cond_exists = ref false
+
+  let ifdef s cs out =
+    last_cond_exists := true;
+    try
+      begin
+        ignore(find s !env);
+        last_cond := true;
+        output_charstream out cs
+      end
+    with Not_found -> 
+      last_cond := false
+
+  let ifndef s cs out =
+    last_cond_exists := true;
+    try 
+      begin
+        ignore(find s !env);
+        last_cond := true;
+        output_charstream out cs
+      end
+    with Not_found -> 
+      last_cond := false
+
+  let ifndef s cs out =
+    last_cond_exists := true;
+    try
+      begin
+        ignore(find s !env);
+        last_cond := false;
+        output_charstream out cs
+      end
+    with Not_found -> 
+        last_cond := true
+
+  let elze s cs out =
+    if !last_cond_exists then
+      begin
+        last_cond_exists := false;
+        if !last_cond then
+          ()
+        else
+          output_charstream out cs
+      end
+    else
+      parse_error ~msg:"`else' without a matching previous `if'."
+        (cs.where())
+
+  let elzeifdef s cs out =
+    if !last_cond_exists then
+      begin
+        if !last_cond then
+          ()
+        else
+          ifdef s cs out
+      end
+    else
+      parse_error ~msg:"`elseifdef' without a matching previous `if'."
+        (cs.where())
+
 end
 
 let builtins : action_set ref =
@@ -91,7 +157,11 @@ let builtins : action_set ref =
   let set = Function(Variable.set) in
   let unset = Function(Variable.unset) in
   let unsetall = Function(Variable.unsetall) in
-  let get = Function(Variable.get) in    
+  let get = Function(Variable.get) in
+  let ifdef = Function(Variable.ifdef) in
+  let ifndef = Function(Variable.ifdef) in
+  let elzeifdef = Function(Variable.elzeifdef) in
+  let elze = Function(Variable.elze) in
   let set_opentoken =
     Function(fun x _cs _out -> open_token := x)
   in
@@ -112,6 +182,10 @@ let builtins : action_set ref =
       (fun r (k,e) -> Mpp_stringmap.add k e r)
       Mpp_stringmap.empty
       [
+        "ifdef", ifdef;
+        "ifndef", ifndef;
+        "else", elze;
+        "elseifdef", elzeifdef;
         "set", set;
         "get", get;
         "unset", unset;
