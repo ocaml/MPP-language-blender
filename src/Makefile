@@ -19,7 +19,7 @@ mpp-ocaml-toplevel-output:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_oc
 	ocamlc -g -o $@ $+
 
 
-all:mpp mpp.out
+all:mpp mpp.out mpp-ocaml-toplevel-output
 
 %.cmo:%.ml
 	ocamlc -c $<
