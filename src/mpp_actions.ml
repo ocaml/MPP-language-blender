@@ -177,12 +177,20 @@ let builtins : action_set ref =
   let set_close_comments_token = 
     Function(fun x _cs _out -> close_comments_token := x)
   in
+  let error = Function(fun s cs _ -> 
+    parse_error 
+      ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." s)
+      (cs.where());
+    Pervasives.exit 1
+  )
+  in
   let r =
     List.fold_left
       (fun r (k,e) -> Mpp_stringmap.add k e r)
       Mpp_stringmap.empty
       [
         "ifdef", ifdef;
+        "error", error;
         "ifndef", ifndef;
         "else", elze;
         "elseifdef", elzeifdef;
