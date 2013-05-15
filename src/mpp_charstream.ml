@@ -151,7 +151,8 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   in
   let rec where () =
     match !csl with
-      | [] -> "<end of file>", 0, 0
+      | [] -> 
+          filename, !line, (match !column with x::_ -> x| _ -> 0)
       | e::_ -> e.where()
   in
   let rec take () =
