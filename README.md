@@ -25,6 +25,8 @@ as pre processor languages.
 
 # Log
 
+* 15 May 2013: new builtins (suggested by X. Clerc): ifdef, ifndef, else, elseifdef, error.
+* 15 May 2013: minor fixes.
 * 14 May 2013: new target in Makefile, for future templating-related features.
 * 14 May 2013: updating mpp_charstream.ml (a new function).
 * 13 May 2013: clean up on entire repository.
