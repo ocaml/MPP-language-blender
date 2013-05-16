@@ -6,21 +6,26 @@ code of your  documents or your programmes. In  other words, thanks to
 MPP,  any programming  language  may easily  become  a pre  processing
 language.
 
+<pre>
 [ document.extension.mpp ] --mpp--> [ document.extension ]
+</pre>
 
 A more classical tool is CPP, the C pre processor.
+<pre>
 [ document.c ] (meta version) --cpp--> [ document.c ] (compiled version)
 [ document.h ] (meta version) --cpp--> [ document.h ] (compiled version)
+</pre>
 
 MPP is more  generic than (most) existing tools. It  is intended to be
 used  for any  (not  completely-insane) programming  language and  any
 description language.
 
-MPP is itself a language, which is minimal and designed to be the glue
-to combining different languages.
+MPP also provides a language, which is minimal and designed to be the glue
+to combining different languages. As part of its library, some built-ins are
+provided.
 
-As MPP is a pre processor, you should think of the "additional" languages
-as pre processor languages. 
+They include directives such as input, ifdef, ifndef, else, elseifdef,
+set, get, unset, unsetall, cmd.
 
 
 # Log
