@@ -32,7 +32,7 @@ easy to extend, easy to customize, and very powerful.
 It is powerful because it allows to use any programming language to programme
 your document, therefore you can actually turn your document into any programme,
 including nasty programmes such as viruses or bad jokes.
-It is still in active development because it still lacks a lot of features but
+It is still in active development because a lot of features are still to be implemented but
 it's already usable.
 
 
