@@ -23,7 +23,7 @@ used  for any  (not  completely-insane) programming  language and  any
 description language.
 
 MPP also provides a language, which is minimal and designed to be the glue
-to combining different languages. As part of its library, some built-ins are
+to combining different languages. As part of its library, some builtins are
 provided. They include directives such as input, ifdef, ifndef, else, elseifdef,
 set, get, unset, unsetall, cmd.
 
@@ -38,6 +38,9 @@ it's already usable.
 
 # Log
 
+* 16 May 2013: new command-line builtin: -set x=s
+* 16 May 2013: (( and )) replace [[ and ]] as default opening/closing tokens.
+* 16 May 2013: bug fixes for ifdef and ifndef builtins.
 * 16 May 2013: variables should never contain a space (otherwise, it might have unexpected behaviour). In particular, for command get, spaces that follow the variable's name are ignored.
 * 15 May 2013: new builtins (suggested by X. Clerc): ifdef, ifndef, else, elseifdef, error.
 * 15 May 2013: minor fixes.
@@ -47,7 +50,7 @@ it's already usable.
 * 13 May 2013: software architecture refactoring.
 * 13 May 2013: new features. Special commands don't start with a dash anymore: a dash is now for shell commands.
 * 9-12 May 2013: improvements.
-* 8 May 2013: MPP is born (it compiles and started preprocessing stuff)
+* 8 May 2013: MPP is born (it compiles and started preprocessing stuff).
 * late April 2013: This project is still in development.
 * late April 2013: The implementation is on-going work.
 * late April 2013: The specifications are not frozen.
