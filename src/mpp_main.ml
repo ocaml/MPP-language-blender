@@ -23,10 +23,10 @@ open Mpp_init
 
 let rec preprocess (charstream: charstream) out =
   assert(!open_token <> "");
-  assert(!close_token <> "");
+  (* assert(!close_token <> ""); *)
   assert(!endline_comments_token <> "");
   assert(!open_comments_token <> "");
-  assert(!close_comments_token <> "");
+  (* assert(!close_comments_token <> ""); *)
   
   (* entry point *)
   let rec loop (): unit =
@@ -117,10 +117,6 @@ let rec preprocess (charstream: charstream) out =
             blockcharstream.push c;
             read_until_one_of ~failsafe:true newline_chars blockcharstream
         | None ->
-            (*             parse_error *)
-            (*               ~msg:"Couldn't read the arguments of the current action." *)
-            (*               (blockcharstream.where()); *)
-            (*             exit 1 *)
             ""
     in
       Mpp_actions.exec action_name action_arguments blockcharstream out;
@@ -238,13 +234,13 @@ let _ =
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
           in
-          let aligned =
-            let rec loop = function
-              | (("-set" as o), a, s) :: rest -> (o, a, (s.[2] <- ' ' ;s)) :: loop rest
-              | (o,a,s) :: rest -> (o,a,s) :: loop rest
-              | [] -> []
-            in loop aligned
-          in 
+(*           let aligned = *)
+(*             let rec loop = function *)
+(*               | (("-set" as o), a, s) :: rest -> (o, a, (s.[2] <- ' ' ;s)) :: loop rest *)
+(*               | (o,a,s) :: rest -> (o,a,s) :: loop rest *)
+(*               | [] -> [] *)
+(*             in loop aligned *)
+(*           in  *)
             Arg.parse
               aligned
               process_one_file
