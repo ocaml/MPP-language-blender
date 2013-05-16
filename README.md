@@ -38,6 +38,7 @@ it's already usable.
 
 # Log
 
+* 16 May 2013: variables should never contain a space (otherwise, it might have unexpected behaviour). In particular, for command get, spaces that follow the variable's name are ignored.
 * 15 May 2013: new builtins (suggested by X. Clerc): ifdef, ifndef, else, elseifdef, error.
 * 15 May 2013: minor fixes.
 * 14 May 2013: new target in Makefile, for future templating-related features.
