@@ -1,18 +1,18 @@
-# MPP: a meta pre processor that blends programming languages
+# MPP: a meta preprocessor that blends programming languages
 
 
 
-MPP is a meta pre processor. It works by helping you combine different
+MPP is a meta preprocessor. It works by helping you combine different
 programming  languages and tools  in order  to pre-process  the source
 code of your  documents or your programmes. In  other words, thanks to
-MPP,  any programming  language  may easily  become  a pre  processing
+MPP,  any programming  language  may easily  become  a preprocessing
 language.
 
 <pre>
 [ document.extension.mpp ] --mpp--> [ document.extension ]
 </pre>
 
-A more classical tool is CPP, the C pre processor.
+A more classical tool is CPP, the C preprocessor.
 <pre>
 [ document.c ] (meta version) --cpp--> [ document.c ] (compiled version)
 [ document.h ] (meta version) --cpp--> [ document.h ] (compiled version)
@@ -26,6 +26,14 @@ MPP also provides a language, which is minimal and designed to be the glue
 to combining different languages. As part of its library, some built-ins are
 provided. They include directives such as input, ifdef, ifndef, else, elseifdef,
 set, get, unset, unsetall, cmd.
+
+MPP is implemented in OCaml. The goal is to have a preprocessor that is 
+easy to extend, easy to customize, and very powerful.
+It is powerful because it allows to use any programming language to programme
+your document, therefore you can actually turn your document into any programme,
+including nasty programmes such as viruses or bad jokes.
+It is still in active development because it still lacks a lot of features but
+it's already usable.
 
 
 # Log
