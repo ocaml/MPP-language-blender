@@ -6,7 +6,7 @@
 (***********************************************************************)
 open Mpp_charstream
 open Mpp_init
-
+open Mpp_variables
 
 type action =
   | Function of (action_name -> charstream -> out_channel -> unit)
@@ -50,102 +50,6 @@ let command arg charstream _out =
             else
               ()
 
-
-module Variable : sig
-  val set: string -> charstream -> 'ignored -> unit
-  val get: string -> charstream -> out_channel -> unit
-  val unset: string -> charstream -> 'ignored -> unit
-  val unsetall: 'string -> 'charstream -> 'out_channel -> unit
-  val ifdef: string -> charstream -> out_channel -> unit
-  val ifndef: string -> charstream -> out_channel -> unit
-  val elzeifdef: string -> charstream -> out_channel -> unit
-  val elze: string -> charstream -> out_channel -> unit
-end = struct
-  include Map.Make(String)
-  let env = ref empty
-  let unsetall _s _cs _out = env := empty
-  let set s cs _ =
-    let css = charstream_of_string s in
-    let variable =
-      read_until_one_of space_chars css
-    in
-    let value = string_of_charstream css ^ string_of_charstream cs in
-      env := add variable value !env
-  let get s cs out =
-    try
-      output_string out (find s !env)
-    with Not_found ->
-      let f, l, c = cs.where() in
-      Pervasives.failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
-  let unset s cs _ =
-    try
-      env := remove s !env
-    with Not_found ->
-      let f, l, c = cs.where() in
-        Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
-
-  let last_cond = ref true
-  let last_cond_exists = ref false
-
-  let ifdef s cs out =
-    last_cond_exists := true;
-    try
-      begin
-        ignore(find s !env);
-        last_cond := true;
-        output_charstream out cs
-      end
-    with Not_found -> 
-      last_cond := false
-
-  let ifndef s cs out =
-    last_cond_exists := true;
-    try 
-      begin
-        ignore(find s !env);
-        last_cond := true;
-        output_charstream out cs
-      end
-    with Not_found -> 
-      last_cond := false
-
-  let ifndef s cs out =
-    last_cond_exists := true;
-    try
-      begin
-        ignore(find s !env);
-        last_cond := false;
-        output_charstream out cs
-      end
-    with Not_found -> 
-        last_cond := true
-
-  let elze s cs out =
-    if !last_cond_exists then
-      begin
-        last_cond_exists := false;
-        if !last_cond then
-          ()
-        else
-          output_charstream out cs
-      end
-    else
-      parse_error ~msg:"`else' without a matching previous `if'."
-        (cs.where())
-
-  let elzeifdef s cs out =
-    if !last_cond_exists then
-      begin
-        if !last_cond then
-          ()
-        else
-          ifdef s cs out
-      end
-    else
-      parse_error ~msg:"`elseifdef' without a matching previous `if'."
-        (cs.where())
-
-end
 
 let builtins : action_set ref =
   let cmd = Function command in
