@@ -14,8 +14,8 @@ let exit i = raise (Exit i)
 let ignore_errors = ref false
 
 (* tokens *)
-let open_token = ref "[["
-let close_token = ref "]]"
+let open_token = ref "(("
+let close_token = ref "))"
 let endline_comments_token = ref "%%"
 let open_comments_token = ref "/*"
 let close_comments_token = ref "*/"
