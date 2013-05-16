@@ -24,6 +24,16 @@ module Variable : sig
   val elze: string -> charstream -> out_channel -> unit
 end = struct
   include Map.Make(String)
+  let suppress_spaces s =
+    let b = Buffer.create (String.length s - 1) in
+      for i = 0 to String.length s - 1 do
+        match s.[i] with
+          | ' ' | '\t' | '\n' | '\r' ->
+              ()
+          | c -> Buffer.add_char b c
+      done;
+      Buffer.contents b
+
   let env = ref empty
   let unsetall _s _cs _out = env := empty
   let set s cs _ =
@@ -34,52 +44,57 @@ end = struct
     let value = string_of_charstream css ^ string_of_charstream cs in
       env := add variable value !env
   let get s cs out =
-    try
-      output_string out (find s !env)
-    with Not_found ->
-      let f, l, c = cs.where() in
-      Pervasives.failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+    let s = suppress_spaces s in
+      try
+        output_string out (find s !env)
+      with Not_found ->
+        let f, l, c = cs.where() in
+          Pervasives.failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
   let unset s cs _ =
-    try
-      env := remove s !env
-    with Not_found ->
-      let f, l, c = cs.where() in
-        Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+    let s = suppress_spaces s in
+      try
+        env := remove s !env
+      with Not_found ->
+        let f, l, c = cs.where() in
+          Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
 
   let last_cond = ref true
   let last_cond_exists = ref false
 
   let ifdef s cs out =
-    last_cond_exists := true;
-    try
-      begin
-        ignore(find s !env);
-        last_cond := true;
-        output_charstream out cs
-      end
-    with Not_found -> 
-      last_cond := false
+    let s = suppress_spaces s in
+      last_cond_exists := true;
+      try
+        begin
+          ignore(find s !env);
+          last_cond := true;
+          output_charstream out cs
+        end
+      with Not_found -> 
+        last_cond := false
 
   let ifndef s cs out =
-    last_cond_exists := true;
-    try 
-      begin
-        ignore(find s !env);
-        last_cond := true;
-        output_charstream out cs
-      end
-    with Not_found -> 
-      last_cond := false
+    let s = suppress_spaces s in
+      last_cond_exists := true;
+      try 
+        begin
+          ignore(find s !env);
+          last_cond := true;
+          output_charstream out cs
+        end
+      with Not_found -> 
+        last_cond := false
 
   let ifndef s cs out =
-    last_cond_exists := true;
-    try
-      begin
-        ignore(find s !env);
-        last_cond := false;
-        output_charstream out cs
-      end
-    with Not_found -> 
+    let s = suppress_spaces s in
+      last_cond_exists := true;
+      try
+        begin
+          ignore(find s !env);
+          last_cond := false;
+          output_charstream out cs
+        end
+      with Not_found -> 
         last_cond := true
 
   let elze s cs out =
@@ -89,7 +104,11 @@ end = struct
         if !last_cond then
           ()
         else
-          output_charstream out cs
+          begin
+            output_string out s;
+            output_char out ' ';
+            output_charstream out cs
+          end
       end
     else
       parse_error ~msg:"`else' without a matching previous `if'."
