@@ -1,4 +1,4 @@
-# MPP-language-blender
+# MPP: a meta pre processor that blends programming languages
 
 MPP is a meta pre processor. It works by helping you combine different
 programming  languages and tools  in order  to pre-process  the source
