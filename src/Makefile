@@ -19,11 +19,6 @@ mpp.opt:$(MPP_CMXs)
 	ocamlopt -g -o $@ $+
 
 
-# This one is still very experimental:
-mpp-ocaml-toplevel-output:mpp_charset.cmo mpp_init.cmo mpp_charstream.cmo mpp_ocaml_toplevel_error_formatting.cmo
-	ocamlc -g -o $@ $+
-
-
 all:mpp mpp.out mpp-ocaml-toplevel-output
 
 %.cmo:%.ml
