@@ -169,7 +169,6 @@ let init() =
 let _ = 
   let () = init() in
   let l = Array.length Sys.argv in
-  let variable_name = ref "" in
   let overwrite = ref false in
   let continue = ref false in
   let defaultoutput = ref "" in
@@ -187,55 +186,69 @@ let _ =
       if
         try Filename.chop_extension filename ^ ".mpp" = filename
         with Invalid_argument _ -> false
-          then
-            begin
-              let outputfilename =
-                if !defaultoutput = "" then
-                  Filename.chop_extension filename 
-                else
-                  !defaultoutput
-              in
-                if Sys.file_exists outputfilename then
-                  begin
-                    Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
-                      outputfilename
-                  end
-                else
-                  begin
-                    let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
-                      preprocess (charstream_of_inchannel filename (open_in filename)) out;
-                      at_least_one_file_processed := true
-                  end
-            end
-          else
-            begin
-              Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
-              preprocess (charstream_of_inchannel filename (open_in filename)) stdout;
-              at_least_one_file_processed := true
-            end
-      in
-        try
-          if l > 1 then
-            begin
-              Arg.parse
-                (Arg.align [
-                 "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
-                  "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
-                  "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-                  "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
-                  "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (\"exec\" means when you call external programmes).";
-                  "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
-                  "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
-                  "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
-                  "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
-                  "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
-                  "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
-                  "-set", Arg.Set_string(variable_name), "variablename Declare that next value (specified using -val) will be the value associated to variablename. The variable will not exist until you set its value using -val.";
-                  "-val", Arg.String(fun s -> if !variable_name <> "" then Mpp_variables.Variable.set (!variable_name ^ " " ^ s) (charstream_of_string "") stdout), "v Sets the variable specified with -set to v.";
-                  "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
-                ])
-                process_one_file
-                ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
+      then
+        begin
+          let outputfilename =
+            if !defaultoutput = "" then
+              Filename.chop_extension filename 
+            else
+              !defaultoutput
+          in
+            if Sys.file_exists outputfilename then
+              begin
+                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
+                  outputfilename
+              end
+            else
+              begin
+                let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
+                  preprocess (charstream_of_inchannel filename (open_in filename)) out;
+                  at_least_one_file_processed := true
+              end
+        end
+      else
+        begin
+          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
+          preprocess (charstream_of_inchannel filename (open_in filename)) stdout;
+          at_least_one_file_processed := true
+        end
+  in
+    try
+      if l > 1 then
+        begin
+          let aligned =
+            Arg.align [
+              "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
+              "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
+              "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+              "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
+              "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (\"exec\" means when you call external programmes).";
+              "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
+              "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
+              "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
+              "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
+              "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
+              "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
+              "-set", Arg.String(fun s ->
+                                    let cs = charstream_of_string s in 
+                                    let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
+                                    let _ = cs.take() in
+                                      Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
+              "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
+              "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
+            ]
+          in
+          let aligned =
+            let rec loop = function
+              | (("-set" as o), a, s) :: rest -> (o, a, (s.[2] <- ' ' ;s)) :: loop rest
+              | (o,a,s) :: rest -> (o,a,s) :: loop rest
+              | [] -> []
+            in loop aligned
+          in 
+            Arg.parse
+              aligned
+              process_one_file
+              ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
 ~ If a file name doesn't have .mpp extension, it will output on stdout.
 ~ If a file already exists, it won't be overwritten unless you use -overwrite.
 ~ If you want to overwrite only certain files, you should invoke this programme separately.
@@ -244,13 +257,14 @@ let _ =
 ~ As of May, 13th, 2013, this software is still under development. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
 List of options:")
-            end;
-          if not !at_least_one_file_processed then
-            preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
-        with e ->
-          if debug then Printexc.print_backtrace stderr;
-          if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
-          Pervasives.exit 1
+        end;
+
+      if not !at_least_one_file_processed then
+        preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
+    with e ->
+      if debug then Printexc.print_backtrace stderr;
+      if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
+      Pervasives.exit 1
 
 
 
