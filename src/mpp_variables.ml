@@ -35,7 +35,9 @@ end = struct
       Buffer.contents b
 
   let env = ref empty
+
   let unsetall _s _cs _out = env := empty
+
   let set s cs _ =
     let css = charstream_of_string s in
     let variable =
@@ -43,6 +45,7 @@ end = struct
     in
     let value = string_of_charstream css ^ string_of_charstream cs in
       env := add variable value !env
+
   let get s cs out =
     let s = suppress_spaces s in
       try
@@ -52,6 +55,7 @@ end = struct
           ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
           (cs.where());
         Pervasives.exit 1
+
   let unset s cs _ =
     let s = suppress_spaces s in
       try
@@ -66,40 +70,36 @@ end = struct
   let last_cond_exists = ref false
 
   let ifdef s cs out =
-    let s = suppress_spaces s in
+    if debug then Printf.eprintf "ifdef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
+    let css = charstream_of_string s in
+    let s = read_until_one_of space_chars css in
       last_cond_exists := true;
       try
         begin
           ignore(find s !env);
           last_cond := true;
+          output_charstream out css;
+          output_char out '\n';
           output_charstream out cs
         end
       with Not_found -> 
         last_cond := false
 
   let ifndef s cs out =
-    let s = suppress_spaces s in
-      last_cond_exists := true;
-      try 
-        begin
-          ignore(find s !env);
-          last_cond := true;
-          output_charstream out cs
-        end
-      with Not_found -> 
-        last_cond := false
-
-  let ifndef s cs out =
-    let s = suppress_spaces s in
+    if debug then Printf.eprintf "ifndef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
+    let css = charstream_of_string s in
+    let s = read_until_one_of space_chars css in
       last_cond_exists := true;
       try
         begin
           ignore(find s !env);
-          last_cond := false;
-          output_charstream out cs
+          last_cond := false
         end
       with Not_found -> 
-        last_cond := true
+        last_cond := true;
+        output_charstream out css;
+        output_char out '\n';
+        output_charstream out cs
 
   let elze s cs out =
     if !last_cond_exists then
@@ -115,8 +115,11 @@ end = struct
           end
       end
     else
-      parse_error ~msg:"`else' without a matching previous `if'."
-        (cs.where())
+      begin
+        parse_error ~msg:"`else' without a matching previous `if'."
+          (cs.where());
+        Pervasives.exit 1
+      end
 
   let elzeifdef s cs out =
     if !last_cond_exists then
@@ -127,7 +130,10 @@ end = struct
           ifdef s cs out
       end
     else
-      parse_error ~msg:"`elseifdef' without a matching previous `if'."
-        (cs.where())
+      begin
+        parse_error ~msg:"`elseifdef' without a matching previous `if'."
+          (cs.where());
+        Pervasives.exit 1
+      end
 
 end
