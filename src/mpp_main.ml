@@ -231,7 +231,7 @@ let _ =
                   "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
                   "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
                   "-set", Arg.Set_string(variable_name), "variablename Declare that next value (specified using -val) will be the value associated to variablename. The variable will not exist until you set its value using -val.";
-                  "-val", Arg.String(fun s -> if !variable_name <> "" then Mpp_variables.Variable.set !variable_name (charstream_of_string s) stdout), "v Sets the variable specified with -set to v.";
+                  "-val", Arg.String(fun s -> if !variable_name <> "" then Mpp_variables.Variable.set (!variable_name ^ " " ^ s) (charstream_of_string "") stdout), "v Sets the variable specified with -set to v.";
                   "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
                 ])
                 process_one_file
