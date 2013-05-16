@@ -169,6 +169,7 @@ let init() =
 let _ = 
   let () = init() in
   let l = Array.length Sys.argv in
+  let variable_name = ref "" in
   let overwrite = ref false in
   let continue = ref false in
   let defaultoutput = ref "" in
@@ -218,7 +219,7 @@ let _ =
             begin
               Arg.parse
                 (Arg.align [
-                  "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
+                 "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
                   "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
                   "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
                   "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
@@ -229,6 +230,8 @@ let _ =
                   "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
                   "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
                   "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
+                  "-set", Arg.Set_string(variable_name), "variablename Declare that next value (specified using -val) will be the value associated to variablename. The variable will not exist until you set its value using -val.";
+                  "-val", Arg.String(fun s -> if !variable_name <> "" then Mpp_variables.Variable.set !variable_name (charstream_of_string s) stdout), "v Sets the variable specified with -set to v.";
                   "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
                 ])
                 process_one_file
