@@ -22,9 +22,7 @@ description language.
 
 MPP also provides a language, which is minimal and designed to be the glue
 to combining different languages. As part of its library, some built-ins are
-provided.
-
-They include directives such as input, ifdef, ifndef, else, elseifdef,
+provided. They include directives such as input, ifdef, ifndef, else, elseifdef,
 set, get, unset, unsetall, cmd.
 
 
