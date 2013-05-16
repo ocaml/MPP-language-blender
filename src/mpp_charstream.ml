@@ -17,23 +17,6 @@ and location = filename*line*column
 and line = int
 and column = int
 
-let string_of_charstream c =
-  let b = Buffer.create 42 in
-  let rec loop () =
-    match c.take () with
-      | None -> Buffer.contents b
-      | Some c -> Buffer.add_char b c; loop()
-  in loop()
-
-let output_charstream out c =
-  let rec loop () =
-    match c.take () with
-      | None -> ()
-      | Some c -> output_char out c; loop()
-  in loop()
-
-module Mpp_charset = Mpp_charset
-
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 
   fun ?start:start ?msg:message (location:location) ->
@@ -72,6 +55,23 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
                       m filename line column
             end
 
+
+let string_of_charstream c =
+  let b = Buffer.create 42 in
+  let rec loop () =
+    match c.take () with
+      | None -> Buffer.contents b
+      | Some c -> Buffer.add_char b c; loop()
+  in loop()
+
+let output_charstream out c =
+  let rec loop () =
+    match c.take () with
+      | None -> ()
+      | Some c -> output_char out c; loop()
+  in loop()
+
+module Mpp_charset = Mpp_charset
 
 let charstream_take_n n charstream =
   let b = Buffer.create n in
