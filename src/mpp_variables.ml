@@ -48,15 +48,19 @@ end = struct
       try
         output_string out (find s !env)
       with Not_found ->
-        let f, l, c = cs.where() in
-          Pervasives.failwith (Printf.sprintf "You tried to get the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+        parse_error
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          (cs.where());
+        Pervasives.exit 1
   let unset s cs _ =
     let s = suppress_spaces s in
       try
         env := remove s !env
       with Not_found ->
-        let f, l, c = cs.where() in
-          Pervasives.failwith (Printf.sprintf "You tried to unset the value of variable %s, which doesn't exist. Location: file <%s> Line<%d> Column<%d>." s f l c)
+        parse_error
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          (cs.where());
+        Pervasives.exit 1
 
   let last_cond = ref true
   let last_cond_exists = ref false
