@@ -19,11 +19,11 @@ and column = int
 
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 
-  fun ?start:start ?msg:message (location:location) ->
+  fun ?start ?msg location ->
     let f, l, c = location in
       match start with
         | None ->
-            begin match message with
+            begin match msg with
               | None -> 
                   Printf.eprintf
                     "Error in %s:%d:%d.\n%!"
@@ -34,7 +34,7 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
                     m f l c
             end
         | Some(filename,line,column) ->
-            begin match message with
+            begin match msg with
               | None ->
                   if l <> 0 && c <> 0 then
                     Printf.eprintf
