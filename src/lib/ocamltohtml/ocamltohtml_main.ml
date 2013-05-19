@@ -4,7 +4,21 @@
  * best your needs and legislation. ******************************* *)
 
 let _ =
-  print_endline "<?xml version='1.0' encoding='utf-8'?>
+  let input = ref "/dev/stdin" in
+  let output = ref "/dev/stdout" in
+    Arg.parse
+      (Arg.align 
+          [
+            "-i", Arg.Set_string input, "f.ml Treat f.ml as input file (default is /dev/stdin)" ;
+            "-o", Arg.Set_string output, "f.html Treat f.html as output file (default is /dev/stdout)";
+          ])
+      (fun s -> Printf.eprintf "I don't know what to do with <%s>.\n%!" s)
+      (Printf.sprintf "Usage: %s [-i f.ml] [-o f.html]" Sys.argv.(0));
+    let ic = open_in !input 
+    and oc = open_out !output in
+      Ocamltohtml_lexer.ic := ic;
+      Ocamltohtml_lexer.oc := oc;
+      Printf.fprintf oc  "<?xml version='1.0' encoding='utf-8'?>
 <html>
 <head>
 <style type='text/css'>/* <!-- */
@@ -18,19 +32,13 @@ let _ =
 /* --> */</style>
 </head>
 <body><pre>
-";
-  let input =
-    if Array.length Sys.argv = 2 || Array.length Sys.argv = 3 then
-      open_in Sys.argv.(1)
-    else
-      stdin
-  in
-    try
-      let lexbuf = Lexing.from_channel input in
-        while true do
-          ignore (Ocamltohtml_lexer.token lexbuf)
-        done
-    with Ocamltohtml_lexer.Eof ->
-      print_endline "</pre></body></html>";
-      (try close_in input with _ -> ());
-      exit 0
+%!";
+      try
+        let lexbuf = Lexing.from_channel ic in
+          while true do
+            ignore (Ocamltohtml_lexer.token lexbuf)
+          done
+      with Ocamltohtml_lexer.Eof ->
+        Printf.fprintf oc "</pre></body></html>";
+        (try close_in ic with _ -> ());
+        exit 0

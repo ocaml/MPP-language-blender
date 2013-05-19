@@ -158,3 +158,7 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out:ou
         charstream out;
       if debug then Printf.eprintf "???%!";
     end
+
+
+let register (name:string) (f:action) =
+  builtins := Mpp_stringmap.add name f !builtins
