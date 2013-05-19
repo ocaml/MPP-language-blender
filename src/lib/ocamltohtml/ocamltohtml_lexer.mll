@@ -10,17 +10,23 @@ exception Eof
 
 let debug = false
 
+let ic = ref stdin
+let oc = ref stdout
+
 let char_count = ref 0
 
 let line_break = "\n"
 
 let print_newline () =
   char_count := 0;
-  print_char '\n'
+  output_char !oc '\n'
+
+let print_char c =
+  output_char !oc c
 
 let print s =
   char_count := !char_count + String.length s;
-  print_string s
+  output_string !oc s
 
 let print_string = print
 
@@ -55,7 +61,7 @@ let open_env e =
         if e = COMMENTS then 
           (Stack.push e toclose ; print_string "<span class='com2'>")
         else 
-          (Stack.push e toclose ; print_string "<span class='inside-comment'><!-- X -->" )
+          (Stack.push e toclose ; print_string "<span class='ic'>" )
     | _ ->
         Stack.push e toclose ; print_string "<span class='other'>"
 
@@ -67,15 +73,15 @@ and close_env e =
             with _ -> if debug then prerr_endline "**************");
           match e with
             | COMMENTS -> print_string "</span><!-- end comment -->"
-            | _ -> print_string "</span><!-- C -->" 
+            | _ -> print_string "</span>" 
         end
     | _ -> 
         (try ignore(Stack.pop toclose)
           with _ -> if debug then prerr_endline "**************");
         match e with
-          | COMMENTS ->  print_string "</span><!-- A -->"
-          | _ -> print_string "</span><!-- B -->"
-        (* print_string "" *)
+          | COMMENTS ->  print_string "</span>"
+          | _ -> print_string "</span>"
+
 
 let open_envs () = 
   assert(Stack.is_empty toclose);
@@ -98,8 +104,7 @@ let newline =
     fun () ->
       incr x ;
       close_envs ();
-      (* Printf.printf "code line %d" !x; *)
-      Printf.printf "\n%!";
+      Printf.fprintf !oc "\n%!";
       open_envs ()
 
       
@@ -111,7 +116,7 @@ let html_escape s =
     else
       match s.[i] with
         | '&' | '<' | '>' | '\'' | '"' as c ->
-            Printf.printf "&#%d;" (int_of_char c);
+            Printf.fprintf !oc "&#%d;" (int_of_char c);
             esc (succ i)
         | c -> 
             print_char c; esc (succ i)
