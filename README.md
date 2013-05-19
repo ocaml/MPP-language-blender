@@ -38,6 +38,8 @@ it's already usable.
 
 # Log
 
+* 19 May 2013: new builtins: ocamlcerror, ocamlhtml and ocamlhtmlcss.
+* 19 May 2013: some bug fixes and minor enhancements.
 * 16 May 2013: new command-line builtin: -set x=s
 * 16 May 2013: (( and )) replace [[ and ]] as default opening/closing tokens.
 * 16 May 2013: bug fixes for ifdef and ifndef builtins.
