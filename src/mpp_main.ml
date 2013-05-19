@@ -50,8 +50,8 @@ let rec preprocess (charstream: charstream) out =
     | None -> ()
     | Some c ->
         (* Printf.eprintf "<%s>%!" (Char.escaped c); *)
-        print_char c;
-        flush stdout;
+        output_char out c;
+        flush out;
         loop()
 
   (* new block *)
@@ -106,8 +106,9 @@ let rec preprocess (charstream: charstream) out =
     let action_name : string = (* name of the action *)
       eat space_chars blockcharstream;
       read_until_one_of
+        ~failsafe:true
         space_chars
-        ~exclude:newline_chars
+        (* ~exclude:newline_chars *)
         ~expect:"Zero or more spaces, and then an action name."
         blockcharstream
     in
@@ -190,7 +191,7 @@ let _ =
             else
               !defaultoutput
           in
-            if Sys.file_exists outputfilename then
+            if Sys.file_exists outputfilename && not !overwrite then
               begin
                 Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
                   outputfilename

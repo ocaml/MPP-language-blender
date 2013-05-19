@@ -32,14 +32,17 @@ let cat out filename =
       "builtin cat error: file <%s> doesn't exist.\n%!"
       filename
 
-let command arg charstream _out =
+let command arg charstream out =
   let file, line, column = charstream.where() in
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
+  let tmp2 = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp2" "plop" in
     output_charstream otmp charstream;
     close_out otmp;
-    let ec = Sys.command ("cat " ^ tmp ^ " | " ^ arg) in
+    let ec = Sys.command ("cat " ^ tmp ^ " | " ^ arg ^ " > " ^ tmp2 ) in
+    let () = cat out tmp2 in
       Sys.remove tmp;
+      Sys.remove tmp2;
       match ec with
         | 0 -> ()
         | _ ->

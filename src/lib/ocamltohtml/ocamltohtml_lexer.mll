@@ -10,7 +10,6 @@ exception Eof
 
 let debug = false
 
-let ic = ref stdin
 let oc = ref stdout
 
 let char_count = ref 0

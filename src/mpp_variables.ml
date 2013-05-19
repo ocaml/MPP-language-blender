@@ -110,7 +110,7 @@ end = struct
         else
           begin
             output_string out s;
-            output_char out ' ';
+            output_char out '\n';
             output_charstream out cs
           end
       end
