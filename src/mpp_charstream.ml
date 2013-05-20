@@ -434,6 +434,7 @@ let split_on_char ?(keep_empty_strings=false) c s =
    let _ = split_on_char ' ' "  eizbez ";;    *)
 
 let parse_a_string cs =
+  let location = cs.where() in
   let b = Buffer.create 10 in
   let rec loop() =
     match cs.take() with
@@ -448,6 +449,19 @@ let parse_a_string cs =
             | Some 'r' -> Buffer.add_char b '\r'
             | Some 't' -> Buffer.add_char b '\t'
             | Some '\n' -> ()
+            | Some (('x'|'X'| '0' .. '2') as c0) ->
+                begin
+                  match cs.take() with
+                    | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c1) -> 
+                        begin match cs.take() with
+                          | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c2) ->
+                              let s = "123" in
+                                s.[0] <- c0; s.[1] <- c1; s.[2] <- c2;
+                                Buffer.add_char b (char_of_int(int_of_string s))
+                          | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
+                        end
+                    | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
+                end
             | Some c -> Buffer.add_char b c
             | None -> ()
           end;
@@ -455,7 +469,8 @@ let parse_a_string cs =
       | Some c ->
           Buffer.add_char b c;
           loop()
-  in loop()
+  in 
+    loop()
 
 
 (* In case one would want to use the standard OCaml Stream module. *)
