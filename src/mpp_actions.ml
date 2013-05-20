@@ -163,5 +163,5 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out:ou
     end
 
 
-let register (name:string) (f:action) =
+let register (name:string) (f:action) : unit =
   builtins := Mpp_stringmap.add name f !builtins
