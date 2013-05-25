@@ -96,6 +96,7 @@ let builtins : action_set ref =
       (fun r (k,e) -> Mpp_stringmap.add k e r)
       Mpp_stringmap.empty
       [
+        "ignore", Function(fun _ _ _ -> ());
         "ifdef", ifdef;
         "error", error;
         "ifndef", ifndef;
