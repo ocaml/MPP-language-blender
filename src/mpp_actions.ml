@@ -39,7 +39,7 @@ let command arg charstream out =
   let tmp2 = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp2" "plop" in
     output_charstream otmp charstream;
     close_out otmp;
-    let ec = Sys.command ("cat " ^ tmp ^ " | " ^ arg ^ " > " ^ tmp2 ) in
+    let ec = Sys.command ("( cat " ^ tmp ^ " | " ^ arg ^ " ) > " ^ tmp2 ) in
     let () = cat out tmp2 in
       Sys.remove tmp;
       Sys.remove tmp2;
