@@ -11,6 +11,13 @@ MPP_MLs = mpp_charset.ml mpp_init.ml mpp_charstream.ml mpp_stringmap.ml mpp_vari
 MPP_CMOs = $(addsuffix .cmo, $(basename $(MPP_MLs)))
 MPP_CMXs = $(addsuffix .cmx, $(basename $(MPP_MLs)))
 
+OCAMLLIBS = str
+OCAMLLIBS_CMA = $(addsuffix .cma, $(OCAMLLIBS))
+OCAMLLIBS_CMXA = $(addsuffix .cmxa, $(OCAMLLIBS))
+
+OCAMLC = ocamlc $(OCAMLLIBS_CMA)
+OCAMLOPT = ocamlopt $(OCAMLLIBS_CMXA)
+
 # Default is the bytecode version because it takes less time to compile.
 default:mpp
 
@@ -18,19 +25,19 @@ lib/ocamltohtml/ocamltohtml_lexer.ml:lib/ocamltohtml/ocamltohtml_lexer.mll
 	cd lib/ocamltohtml && make $$(basename $@)
 
 mpp:$(MPP_CMOs)
-	ocamlc -g -o $@ $+
+	$(OCAMLC) -g -o $@ $+
 
 mpp.opt:$(MPP_CMXs)
-	ocamlopt -g -o $@ $+
+	$(OCAMLOPT) -g -o $@ $+
 
 
 all:mpp mpp.out mpp-ocaml-toplevel-output
 
 %.cmo:%.ml
-	ocamlc -I lib/ocamltohtml -c $<
+	$(OCAMLC) -I lib/ocamltohtml -c $<
 
 %.cmx:%.ml
-	ocamlopt -I lib/ocamltohtml -c $<
+	$(OCAMLOPT) -I lib/ocamltohtml -c $<
 
 clean:
 	rm -f *.cm[oxi] mpp mpp.opt *~

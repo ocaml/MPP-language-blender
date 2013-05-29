@@ -83,8 +83,168 @@ let html_of_ocamlc args _cs out =
         Mpp_actions.cat out tmp1;
         Printf.fprintf out "</span>"
 
+exception Break
+exception Next
+
+let fragment args cs out =
+  let open Mpp_charstream in
+  let open Mpp_init in
+  let location = cs.where() in
+  let s = Mpp_charstream.append (charstream_of_string args) cs in
+  let args = () and cs = () in let () = ignore args; ignore cs in
+  let filename = ref "/dev/stdin" in
+  let fr = ref "" in
+  let fc = ref (-1) in
+  let fl = ref (-1) in
+  let tr = ref "" in
+  let tc = ref (-1) in
+  let tl = ref (-1) in
+  let rec parse_args () =
+    eat space_chars s;
+    match s.take() with
+      | Some '-' -> 
+          begin
+            match read_until_one_of space_chars s with
+              | "fl" | "fromline" ->
+                  eat space_chars s;
+                  fl := parse_int s
+              | "fc" | "fromchar" ->
+                  eat space_chars s;
+                  fc := parse_int s
+              | "tl" | "toline" ->
+                  eat space_chars s;
+                  tl := parse_int s
+              | "tc" | "tochar" ->
+                  eat space_chars s;
+                  tc := parse_int s
+              | "fr" | "fromregexp" ->
+                  eat space_chars s;
+                  begin match s.take() with
+                    | Some '"' ->
+                        fr := parse_a_string s
+                    | Some c ->
+                        s.push c;
+                        fr := read_until_one_of space_chars s
+                    | None ->
+                        parse_error ~msg:"Wrong usage of builtin frag (1)." location;
+                        exit 1
+                  end
+              | "tr" | "toregexp" ->
+                  eat space_chars s;
+                  begin match s.take() with
+                    | Some '"' ->
+                        tr := parse_a_string s
+                    | Some c ->
+                        s.push c;
+                        tr := read_until_one_of space_chars s
+                    | None ->
+                        parse_error ~msg:"Wrong usage of builtin frag (2)." location;
+                        exit 1
+                  end
+              | wrong ->
+                  parse_error
+                    ~msg:(Printf.sprintf "Unknown option -%s in usage of builtin frag." 
+                            (String.escaped wrong))
+                    location;
+                  exit 1
+          end;
+          parse_args()
+      | None -> ()
+      | Some '"' ->
+          filename := parse_a_string s
+      | Some c ->
+          s.push c;
+          filename := read_until_one_of ~failsafe:true space_chars s
+
+  in
+  let () = parse_args() in
+  let ic = open_in !filename in
+  let line_count = ref 1 in
+  let char_count = ref 0 in
+  let input_char ic =
+    match Pervasives.input_char ic with
+      | '\n' as c -> incr char_count; incr line_count; c
+      | c -> incr char_count; c
+  in
+  let input_line ic =
+    let b = Buffer.create 100 in
+      try
+        let rec loop() =
+          match input_char ic with
+            | '\n' -> Buffer.contents b
+            | c -> Buffer.add_char b c; loop()
+        in loop()
+      with End_of_file ->
+        match Buffer.contents b with
+          | "" -> raise End_of_file
+          | l -> l
+  in
+    try
+      begin match !fr with
+        | "" -> ()
+        | x -> 
+            let r = Str.regexp x in
+              try while true do
+                let l = input_line ic in
+                  if Str.string_match r l 0 then
+                    raise Next
+              done with End_of_file -> raise Next
+      end;
+      begin
+        while !line_count < !fl do
+          ignore(input_line ic)
+        done;
+        if !fl > 0 then raise Next;
+      end;
+      begin
+        while !char_count < !fc do
+          ignore(input_char ic)
+        done
+      end;
+      raise Next
+    with Next ->
+      try
+        begin match !tr with
+          | "" -> ()
+          | x ->
+              let r = Str.regexp x in
+                while true do
+                  let l = input_line ic in
+                    if Str.string_match r l 0 then        
+                      raise Break
+                    else
+                      (output_string out l; output_char out '\n')
+                done;
+                raise Break
+        end;
+        begin
+          for i = 1 to !tc - !fc do
+            output_char out (input_char ic)
+          done;
+          if !tc > 0 then raise Break
+        end;
+        begin
+          for i = 1 to !tl - !fl do
+            output_string out (input_line ic);
+            output_char out '\n'
+          done;
+          if !tl > 0 then raise Break
+        end
+      with End_of_file|Break ->
+        close_in ic;
+        flush out        
+;;
+
+let fragment args cs out =
+  try fragment args cs out
+  with e ->
+    Printf.eprintf "Exception bizarre %s\n%!" (Printexc.to_string e);
+    assert false
+
+(* Register the functions to the builtin set. *)
 let () =
   Mpp_actions.register "ocamlhtmlcss" (Mpp_actions.Function html_of_ocaml_default_css);
   Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml);
   Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc);
+  Mpp_actions.register "frag" (Mpp_actions.Function fragment);
   ()

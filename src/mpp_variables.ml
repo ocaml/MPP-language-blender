@@ -16,6 +16,7 @@ let environment : set = Mpp_stringmap.empty
 module Variable : sig
   val set: string -> charstream -> 'ignored -> unit
   val get: string -> charstream -> out_channel -> unit
+  val tryget: string -> charstream -> out_channel -> unit
   val unset: string -> charstream -> 'ignored -> unit
   val unsetall: 'string -> 'charstream -> 'out_channel -> unit
   val ifdef: string -> charstream -> out_channel -> unit
@@ -55,6 +56,13 @@ end = struct
           ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
           (cs.where());
         Pervasives.exit 1
+
+  let tryget s cs out =
+    let s = suppress_spaces s in
+      try
+        output_string out (find s !env)
+      with Not_found ->
+        ()
 
   let unset s cs _ =
     let s = suppress_spaces s in

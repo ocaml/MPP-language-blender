@@ -329,6 +329,7 @@ let parse_int charstream =
     int_of_string (Buffer.contents res)
 
 
+(*
 (* Parses a string in the format "([^\\]|(\\\\)|(\\\"))*" *)
 let parse_string charstream =
   if debug then Printf.eprintf "parse_string\n%!";
@@ -361,6 +362,7 @@ let parse_string charstream =
             (charstream.where());
           exit 1
   in loop ()
+*)
 
 
 (* Reads until an exact word is found. *)
@@ -430,3 +432,68 @@ let split_on_char ?(keep_empty_strings=false) c s =
 
 (* let _ = split_on_char 'c' "ncdiunuidscnicndsncdisnciudnplop";;
    let _ = split_on_char ' ' "  eizbez ";;    *)
+
+let parse_a_string cs =
+  let location = cs.where() in
+  let b = Buffer.create 10 in
+  let rec loop() =
+    match cs.take() with
+      | None -> Buffer.contents b
+      | Some '"' -> Buffer.contents b
+      | Some '\\' ->
+          begin match cs.take() with
+            (* | '"' as c -> Buffer.add_char b c *)
+            | Some ('\\' as c) -> Buffer.add_char b c
+            | Some 'n' -> Buffer.add_char b '\n'
+            | Some 'b' -> Buffer.add_char b '\b'
+            | Some 'r' -> Buffer.add_char b '\r'
+            | Some 't' -> Buffer.add_char b '\t'
+            | Some '\n' -> ()
+            | Some (('x'|'X'| '0' .. '2') as c0) ->
+                begin
+                  match cs.take() with
+                    | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c1) -> 
+                        begin match cs.take() with
+                          | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c2) ->
+                              let s = "123" in
+                                s.[0] <- c0; s.[1] <- c1; s.[2] <- c2;
+                                Buffer.add_char b (char_of_int(int_of_string s))
+                          | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
+                        end
+                    | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
+                end
+            | Some c -> Buffer.add_char b c
+            | None -> ()
+          end;
+          loop()
+      | Some c ->
+          Buffer.add_char b c;
+          loop()
+  in 
+    loop()
+
+
+(* In case one would want to use the standard OCaml Stream module. *)
+let stream_of_charstream (cs:charstream) : char Stream.t =
+  Stream.from (fun _ -> cs.take())
+
+
+let append cs1 cs2 =
+  let current_is_cs1 = ref true in
+    {
+      take  =
+        (fun () -> 
+           if !current_is_cs1 then
+             match cs1.take() with
+               | (Some _) as c ->
+                   c
+               | None ->
+                   current_is_cs1 := false; 
+                   cs2.take()
+           else
+             cs2.take()
+        );
+      push   = (fun c -> if !current_is_cs1 then cs1.push c else cs2.push c);
+      insert = (fun c -> if !current_is_cs1 then cs1.insert c else cs2.insert c);
+      where  = (fun () -> if !current_is_cs1 then cs1.where() else cs2.where())
+    }

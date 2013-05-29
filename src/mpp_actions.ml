@@ -65,6 +65,7 @@ let builtins : action_set ref =
   let unset = Function(Variable.unset) in
   let unsetall = Function(Variable.unsetall) in
   let get = Function(Variable.get) in
+  let tryget = Function(Variable.tryget) in
   let ifdef = Function(Variable.ifdef) in
   let ifndef = Function(Variable.ifdef) in
   let elzeifdef = Function(Variable.elzeifdef) in
@@ -98,6 +99,7 @@ let builtins : action_set ref =
       [
         "ignore", Function(fun _ _ _ -> ());
         "ifdef", ifdef;
+        "tryget", tryget;
         "error", error;
         "ifndef", ifndef;
         "else", elze;
@@ -164,5 +166,5 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out:ou
     end
 
 
-let register (name:string) (f:action) =
+let register (name:string) (f:action) : unit =
   builtins := Mpp_stringmap.add name f !builtins
