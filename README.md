@@ -38,8 +38,11 @@ it's already usable.
 
 # Log
 
-* 26 May 2013: new builtin: ignore
-* 20 May 2013: new builtin: tryget (it's a get that won't fail)
+* 4 June 2013: documentation of builtin commands.
+* 4 June 2013: new features: options -cc and -cl for builtin frag.
+* 4 June 2013: bug fix: builtin frag.
+* 26 May 2013: new builtin: ignore.
+* 20 May 2013: new builtin: tryget (it's a get that won't fail).
 * 20 May 2013: new builtin: frag (for fragment), very useful to include parts of a file.
 * 19 May 2013: new builtins: ocamlcerror, ocamlhtml and ocamlhtmlcss.
 * 19 May 2013: some bug fixes and minor enhancements.
