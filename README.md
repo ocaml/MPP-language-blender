@@ -39,7 +39,7 @@ it's already usable.
 
 * 4 June 2013: options -ignoreerrors and -soee replaced by -ine and -see.
 * 4 June 2013: new builtin: builtins (it is useful when trying MPP on stdin).
-* 4 June 2013: documentation of builtin commands.
+* 4 June 2013: documentation of builtin commands are now activated: mpp -builtins will output the list of builtins with a small description.
 * 4 June 2013: new features: options -cc and -cl for builtin frag.
 * 4 June 2013: bug fix: options -tl and -tc for builtin frag.
 * 26 May 2013: new builtin: ignore.
