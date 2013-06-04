@@ -129,14 +129,14 @@ let apply_builtin action_name location =
       | Function f, _ -> f
       | Command s, _ -> Pervasives.failwith "Command not yet implemented."
   with Not_found ->
-    if !ignore_errors then
+    if !ignore_non_existing_commands then
       begin
         fun _ _ _ -> ()
       end
     else
       begin
         parse_error
-          ~msg:(Printf.sprintf "Action <%s> not found!" action_name)
+          ~msg:(Printf.sprintf "Command <%s> not found!" action_name)
           location;
         Pervasives.exit 1
       end

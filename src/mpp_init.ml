@@ -11,7 +11,7 @@ let debug =
 exception Exit of int
 let exit i = raise (Exit i)
 
-let ignore_errors = ref false
+let ignore_non_existing_commands = ref false
 
 (* tokens *)
 let open_token = ref "(("

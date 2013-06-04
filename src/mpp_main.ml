@@ -203,9 +203,11 @@ let _ =
             Arg.align [
               "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
+              "-ow", Arg.Set(overwrite), " Alias for -overwrite.";
               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-              "-ignoreerrors", Arg.Set(ignore_errors), " Ignore (some) errors.";
-              "-soee", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop on exec errors (\"exec\" means when you call external programmes).";
+              "-c", Arg.Set(continue), " Alias for -continue.";
+              "-ine", Arg.Set(ignore_non_existing_commands), " Ignore non existing commands instead of stopping. (Default is to stop.)";
+              "-see", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop if an error has occurred when executing an external command. (Default is not to stop.)";
               "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
               "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
