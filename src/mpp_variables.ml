@@ -44,7 +44,12 @@ end = struct
     let variable =
       read_until_one_of space_chars css
     in
-    let value = string_of_charstream css ^ string_of_charstream cs in
+    let value = 
+      match string_of_charstream cs with
+        | "" -> string_of_charstream css
+        | x -> 
+            string_of_charstream css ^ "\n" ^ x
+    in
       env := add variable value !env
 
   let get s cs out =

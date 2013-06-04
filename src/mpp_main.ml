@@ -4,19 +4,6 @@
 (* Licence : CeCILL-B                                                  *)
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
-(* This is on-going work which is not intended to be used at the
- * moment. So if you're reading this, don't be surprised if it doesn't
- * work yet! *)
-
-(* **********************************************************************
-   This block was intended to make this programme able to run on itself.
-   **********************************************************************
-   * [[ -setopen {{{]] {{{ -setclose }}}]] {{{ -setendlinecomments ###}}}
-   * {{{ -setopencomments <<<}}}
-   * {{{ -setclosecomments >>>}}}
-   * <<< plop >>>
-   * {{{29873 -echo whatever 29873}}}
-   ********************************************************************* *)
 
 open Mpp_charstream
 open Mpp_init
@@ -144,7 +131,6 @@ let rec preprocess (charstream: charstream) out =
   and close_comments_token_action() = 
     parse_error ~msg:"Closing unopened comments block." (charstream.where());
     exit 1
-
   in 
     loop()
 
@@ -161,7 +147,7 @@ let init() =
         close_in x
     )
   in
-    Mpp_actions.builtins := Mpp_stringmap.add "input" builtin__input !Mpp_actions.builtins
+    Mpp_actions.register "input" builtin__input ""
 
 let _ = 
   let () = init() in
@@ -191,7 +177,7 @@ let _ =
             else
               !defaultoutput
           in
-            if Sys.file_exists outputfilename && not !overwrite then
+            if outputfilename <> "/dev/stdout" && Sys.file_exists outputfilename && not !overwrite then
               begin
                 Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
                   outputfilename

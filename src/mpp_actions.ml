@@ -13,7 +13,8 @@ type action =
   | Command of string
 and action_name = string
 
-type action_set = action Mpp_stringmap.t
+type action_set = (action*documentation) Mpp_stringmap.t
+and documentation = string
 
 let actions : action_set ref = ref Mpp_stringmap.empty
 
@@ -94,28 +95,28 @@ let builtins : action_set ref =
   in
   let r =
     List.fold_left
-      (fun r (k,e) -> Mpp_stringmap.add k e r)
+      (fun r (k,e,doc) -> Mpp_stringmap.add k (e,doc) r)
       Mpp_stringmap.empty
       [
-        "ignore", Function(fun _ _ _ -> ());
-        "ifdef", ifdef;
-        "tryget", tryget;
-        "error", error;
-        "ifndef", ifndef;
-        "else", elze;
-        "elseifdef", elzeifdef;
-        "set", set;
-        "get", get;
-        "unset", unset;
-        "unsetall", unsetall;
-        "cmd", cmd; 
-        "echo", echo; 
-        "cat", cat;
-        "setopen", set_opentoken;
-        "setclose", set_closetoken;
-        "setendlinecomments", set_endline_comments_token;
-        "setopencomments", set_open_comments_token;
-        "setclosecomments", set_close_comments_token;
+        "ignore", Function(fun _ _ _ -> ()), "";
+        "ifdef", ifdef, "";
+        "tryget", tryget, "";
+        "error", error, "";
+        "ifndef", ifndef, "";
+        "else", elze, "";
+        "elseifdef", elzeifdef, "";
+        "set", set, "";
+        "get", get, "";
+        "unset", unset, "";
+        "unsetall", unsetall, "";
+        "cmd", cmd, ""; 
+        "echo", echo, ""; 
+        "cat", cat, "";
+        "setopen", set_opentoken, "";
+        "setclose", set_closetoken, "";
+        "setendlinecomments", set_endline_comments_token, "";
+        "setopencomments", set_open_comments_token, "";
+        "setclosecomments", set_close_comments_token, "";
       ]
   in ref r
 
@@ -127,11 +128,11 @@ let list_builtins () =
   Mpp_stringmap.iter (fun k _v -> Printf.printf "%s\n" k) !builtins;
   Pervasives.exit 0
 
-let lookup_builtin action_name location =
+let apply_builtin action_name location =
   try
     match Mpp_stringmap.find action_name !builtins with
-      | Function f -> f
-      | Command s -> Pervasives.failwith "Command not yet implemented."
+      | Function f, _ -> f
+      | Command s, _ -> Pervasives.failwith "Command not yet implemented."
   with Not_found ->
     if !ignore_errors then
       begin
@@ -156,15 +157,17 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out:ou
         action_name arguments;
     end;
   if action_name.[0] <> '-' then
-    (lookup_builtin action_name (charstream.where())) arguments charstream out
+    (apply_builtin action_name (charstream.where())) arguments charstream out
   else
     begin
-      (lookup_builtin "cmd" (charstream.where()))
+      (apply_builtin "cmd" (charstream.where()))
         (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ arguments)
         charstream out;
       if debug then Printf.eprintf "???%!";
     end
 
 
-let register (name:string) (f:action) : unit =
-  builtins := Mpp_stringmap.add name f !builtins
+let register (name:string) (f:action) (d:documentation) : unit =
+  builtins := Mpp_stringmap.add name (f,d) !builtins
+
+let builtins = () (* prevent builtins from being used outside. Perhaps I'll switch to using an mli file. *)

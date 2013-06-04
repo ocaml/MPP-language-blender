@@ -56,11 +56,11 @@ let html_of_ocamlc args _cs out =
           done;
           ignore(fcs.take())
         in
-        let s = charstream_take_n (colstart+1) fcs in
+        let s = charstream_take_n (colstart) (fcs) in
         let () = Printf.fprintf out "<pre class='ocaml'>" in
         let () = Ocamltohtml_lexer.oc := out in
         let () = Ocamltohtml_lexer.html_escape s in
-        let es = charstream_take_n (colend - colstart) fcs in
+        let es = charstream_take_n (colend - colstart + 1) fcs in
         let el = read_until '\n' fcs in
         let lexbuf1 = Lexing.from_string (es) in
         let lexbuf2 = Lexing.from_string (el) in
@@ -94,11 +94,13 @@ let fragment args cs out =
   let args = () and cs = () in let () = ignore args; ignore cs in
   let filename = ref "/dev/stdin" in
   let fr = ref "" in
-  let fc = ref (-1) in
-  let fl = ref (-1) in
+  let fc = ref min_int in
+  let fl = ref min_int in
   let tr = ref "" in
-  let tc = ref (-1) in
-  let tl = ref (-1) in
+  let tc = ref 0 in
+  let tl = ref 0 in
+  let cc = ref 0 in
+  let cl = ref 0 in
   let rec parse_args () =
     eat space_chars s;
     match s.take() with
@@ -117,6 +119,12 @@ let fragment args cs out =
               | "tc" | "tochar" ->
                   eat space_chars s;
                   tc := parse_int s
+              | "cc" | "countchar" ->
+                  eat space_chars s;
+                  cc := parse_int s
+              | "cl" | "countline" ->
+                  eat space_chars s;
+                  cl := parse_int s
               | "fr" | "fromregexp" ->
                   eat space_chars s;
                   begin match s.take() with
@@ -158,80 +166,98 @@ let fragment args cs out =
 
   in
   let () = parse_args() in
-  let ic = open_in !filename in
-  let line_count = ref 1 in
+  let fcs = charstream_of_inchannel !filename (open_in !filename) in
+  let line_count () = match fcs.where() with _, l, _ -> l in
   let char_count = ref 0 in
-  let input_char ic =
-    match Pervasives.input_char ic with
-      | '\n' as c -> incr char_count; incr line_count; c
-      | c -> incr char_count; c
+  let input_char cs =
+    match cs.take() with
+      | (Some c) as r -> incr char_count; r
+      | None -> None
   in
-  let input_line ic =
+  let input_line cs =
     let b = Buffer.create 100 in
-      try
-        let rec loop() =
-          match input_char ic with
-            | '\n' -> Buffer.contents b
-            | c -> Buffer.add_char b c; loop()
-        in loop()
-      with End_of_file ->
-        match Buffer.contents b with
-          | "" -> raise End_of_file
-          | l -> l
+    let rec loop() =
+      match input_char cs with
+        | Some '\n' -> Buffer.contents b
+        | Some c -> Buffer.add_char b c; loop()
+        | None -> 
+            match Buffer.contents b with
+              | "" -> raise End_of_file
+              | l -> l
+    in loop()
   in
+    (* First part: eat unwanted characters. *)
     try
+      (* Regexp start? *)
       begin match !fr with
         | "" -> ()
-        | x -> 
+        | x -> (* Read until regexp is matched *)
             let r = Str.regexp x in
               try while true do
-                let l = input_line ic in
+                let l = input_line fcs in
                   if Str.string_match r l 0 then
                     raise Next
               done with End_of_file -> raise Next
       end;
+      (* Line start? *)
       begin
-        while !line_count < !fl do
-          ignore(input_line ic)
+        while line_count() < !fl do
+          ignore(input_line fcs)
         done;
         if !fl > 0 then raise Next;
       end;
       begin
         while !char_count < !fc do
-          ignore(input_char ic)
+          ignore(input_char fcs)
         done
       end;
       raise Next
     with Next ->
+      (* Second part: output wanted characters. *)
       try
         begin match !tr with
           | "" -> ()
           | x ->
               let r = Str.regexp x in
                 while true do
-                  let l = input_line ic in
-                    if Str.string_match r l 0 then        
+                  let l = input_line fcs in
+                    if Str.string_match r l 0 then
                       raise Break
                     else
                       (output_string out l; output_char out '\n')
                 done;
                 raise Break
         end;
+        if !cc > 0 then
+          begin
+            while !cc > 0 do
+              output_char out (match input_char fcs with Some c -> c | None -> raise End_of_file);
+              decr cc
+            done;
+            raise Break
+          end;
+        if !cl > 0 then begin
+          while !cl > 0 do
+            output_string out (input_line fcs);
+            output_char out '\n';
+            decr cl
+          done;
+          raise Break
+        end;
         begin
-          for i = 1 to !tc - !fc do
-            output_char out (input_char ic)
+          for i = !char_count to !tc do
+            output_char out (match input_char fcs with Some c -> c | None -> raise End_of_file)
           done;
           if !tc > 0 then raise Break
         end;
         begin
-          for i = 1 to !tl - !fl do
-            output_string out (input_line ic);
+          for _x = line_count() to !tl do
+            output_string out (input_line fcs);
             output_char out '\n'
           done;
           if !tl > 0 then raise Break
         end
       with End_of_file|Break ->
-        close_in ic;
         flush out        
 ;;
 
@@ -243,8 +269,8 @@ let fragment args cs out =
 
 (* Register the functions to the builtin set. *)
 let () =
-  Mpp_actions.register "ocamlhtmlcss" (Mpp_actions.Function html_of_ocaml_default_css);
-  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml);
-  Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc);
-  Mpp_actions.register "frag" (Mpp_actions.Function fragment);
+  Mpp_actions.register "ocamlhtmlcss" (Mpp_actions.Function html_of_ocaml_default_css) "Prints a CSS for ocamlhtml.";
+  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml) "";
+  Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc) "";
+  Mpp_actions.register "frag" (Mpp_actions.Function fragment) "";
   ()
