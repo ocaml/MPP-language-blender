@@ -270,7 +270,7 @@ let fragment args cs out =
 (* Register the functions to the builtin set. *)
 let () =
   Mpp_actions.register "ocamlhtmlcss" (Mpp_actions.Function html_of_ocaml_default_css) "Prints a CSS for ocamlhtml.";
-  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml) "";
-  Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc) "";
-  Mpp_actions.register "frag" (Mpp_actions.Function fragment) "";
+  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml) "OCaml syntax highlighting for OCaml.";
+  Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc) "Execute an ocamlc or ocamlopt command, and process (i.e. turn it into HTML) the output error message if any.";
+  Mpp_actions.register "frag" (Mpp_actions.Function fragment) "Input a fragment of a file.";
   ()

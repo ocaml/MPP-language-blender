@@ -147,7 +147,7 @@ let init() =
         close_in x
     )
   in
-    Mpp_actions.register "input" builtin__input ""
+    Mpp_actions.register "input" builtin__input "Input and process a file."
 
 let _ = 
   let () = init() in

@@ -98,35 +98,30 @@ let builtins : action_set ref =
       (fun r (k,e,doc) -> Mpp_stringmap.add k (e,doc) r)
       Mpp_stringmap.empty
       [
-        "ignore", Function(fun _ _ _ -> ()), "";
-        "ifdef", ifdef, "";
-        "tryget", tryget, "";
-        "error", error, "";
-        "ifndef", ifndef, "";
-        "else", elze, "";
-        "elseifdef", elzeifdef, "";
-        "set", set, "";
-        "get", get, "";
-        "unset", unset, "";
-        "unsetall", unsetall, "";
-        "cmd", cmd, ""; 
-        "echo", echo, ""; 
-        "cat", cat, "";
-        "setopen", set_opentoken, "";
-        "setclose", set_closetoken, "";
-        "setendlinecomments", set_endline_comments_token, "";
-        "setopencomments", set_open_comments_token, "";
-        "setclosecomments", set_close_comments_token, "";
+        "ignore", Function(fun _ _ _ -> ()), "A command that does nothing with its arguments.";
+        "ifdef", ifdef, "If the argument is a defined variable, then inputs the rest.";
+        "tryget", tryget, "Get the value of a variable, and if it doesn't exist, it does nothing.";
+        "error", error, "Stops MPP.";
+        "ifndef", ifndef, "If the argument is not a defined variable, then inputs the rest, else does nothing.";
+        "else", elze, "If the previous test was not satisfied, then outputs its arguments";
+        "elseifdef", elzeifdef, "If the previous test was not satisfied and the variable exists, then outputs the rest.";
+        "set", set, "Set the variable to the rest. Related: get, tryget, unset, unsetall.";
+        "get", get, "Get the value of a variable, and if it does not exist, MPP stops. Related: set, tryget, unset, unsetall.";
+        "unset", unset, "Unsets a variable. Related: tryget, get, tryget, unsetall.";
+        "unsetall", unsetall, "Unset all variables. Related: tryget, get, tryget, unsetall.";
+        "cmd", cmd, "Executes the rest of the line as a shell command. Following lines (if any) are given as input of the shell command."; 
+        "echo", echo, "Prints the rest of the line."; 
+        "cat", cat, "Prints the contents of a file.";
+        "setopen", set_opentoken, "Sets the opening token. Related: setclose.";
+        "setclose", set_closetoken, "Sets the closing token. Related: setopen.";
+        "setendlinecomments", set_endline_comments_token, "Sets the endline comments token.";
+        "setopencomments", set_open_comments_token, "Sets the opening comments token. Related: setclosecomments.";
+        "setclosecomments", set_close_comments_token, "Sets the endline comments token. Related: setopencomments.";
       ]
   in ref r
 
 (* **end library ********************************************* *)
 (* *********************************************************** *)
-
-
-let list_builtins () =
-  Mpp_stringmap.iter (fun k _v -> Printf.printf "%s\n" k) !builtins;
-  Pervasives.exit 0
 
 let apply_builtin action_name location =
   try
@@ -167,7 +162,33 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out:ou
     end
 
 
+
+let list_builtins () =
+  let m =
+    4 + Mpp_stringmap.fold
+      (fun k _ r -> max (String.length k) r)
+      !builtins
+      0
+  in
+  let pad k = 
+    k ^ String.make (max 1 (m - String.length k)) ' '
+  in
+    Mpp_stringmap.iter
+      (fun k (_e, doc) ->
+         Printf.printf "%s %s\n" (pad k) doc)
+      !builtins;
+    Pervasives.exit 0
+
 let register (name:string) (f:action) (d:documentation) : unit =
   builtins := Mpp_stringmap.add name (f,d) !builtins
 
+let _ =
+  register
+    "builtins"
+    (Function (fun _ _ _ -> list_builtins()))
+    "List all available builtins."
+
+
 let builtins = () (* prevent builtins from being used outside. Perhaps I'll switch to using an mli file. *)
+
+
