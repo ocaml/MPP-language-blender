@@ -8,41 +8,64 @@
 open Mpp_charstream
 open Mpp_init
 
-let rec preprocess (charstream: charstream) out =
-  assert(!open_token <> "");
+let rec preprocess (charstream:charstream) out =
+  (* assert(!open_token <> ""); *)
   (* assert(!close_token <> ""); *)
-  assert(!endline_comments_token <> "");
-  assert(!open_comments_token <> "");
+  (* assert(!endline_comments_token <> ""); *)
+  (* assert(!open_comments_token <> ""); *)
   (* assert(!close_comments_token <> ""); *)
+
+  let default_buffer = Buffer.create 4242 in
   
   (* entry point *)
   let rec loop (): unit =
     begin
       if match_token !open_token charstream then
         open_token_action()
-      else if match_token !close_token charstream then
-        close_token_action()
+
       else if match_token !endline_comments_token charstream then
         endline_comments_token_action()
+
       else if match_token !open_comments_token charstream then
         open_comments_token_action()
+
+      else if match_token !open_special_token charstream then
+        open_special_token_action()
+
+      else if match_token !close_special_token charstream then
+        close_special_token_action()
+
+      else if match_token !close_token charstream then
+        close_token_action()
+
       else if match_token !close_comments_token charstream then
         close_comments_token_action()
+
       else
         default(charstream.take())
     end
+
+  and flush_default() =
+    Buffer.output_buffer out default_buffer;
+    flush out;
+    loop()
 
   (* default action *)
   and default = function
     | None -> ()
     | Some c ->
-        (* Printf.eprintf "<%s>%!" (Char.escaped c); *)
-        output_char out c;
-        flush out;
+        Buffer.add_string default_buffer (!Mpp_init.special.char_escape c);
         loop()
+
+  and open_special_token_action() =
+    flush_default();
+    let x = read_until_word charstream (!close_special_token) in
+      output_string out x;
+      loop()
 
   (* new block *)
   and open_token_action () =
+    flush_default();
     let _action_nested_option =
       match charstream.take() with
         | Some '\\' -> `Not_Nested
@@ -112,7 +135,11 @@ let rec preprocess (charstream: charstream) out =
 
   (* Closing a block that hasn't been opened is wrong. *)
   and close_token_action() =
-    parse_error ~msg:"Closing unopened block." (charstream.where());
+    parse_error ~msg:"Closing unopened action block." (charstream.where());
+    exit 1
+
+  and close_special_token_action() = 
+    parse_error ~msg:"Closing unopened special block." (charstream.where());
     exit 1
 
   (* Just ignore what has to be ignored. *)
@@ -122,7 +149,8 @@ let rec preprocess (charstream: charstream) out =
       loop()
 
   (* New comment block. *)
-  and open_comments_token_action() = 
+  and open_comments_token_action() =
+    flush_default();
     let _c = read_until_word charstream (!close_comments_token) in
       if debug then Printf.eprintf  "comments: <%s>\n%!" _c;
       loop()
@@ -191,7 +219,7 @@ let _ =
         end
       else
         begin
-          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll ouput on stdout.\n%!" filename;
+          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll output on stdout.\n%!" filename;
           preprocess (charstream_of_inchannel filename (open_in filename)) stdout;
           at_least_one_file_processed := true
         end
@@ -211,6 +239,8 @@ let _ =
               "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
               "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
+              "-setopenspecialtoken", Arg.Set_string(open_special_token), "token Set open special token.";
+              "-setclosespecialtoken", Arg.Set_string(close_special_token), "token Set close special token.";
               "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
               "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
               "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
@@ -220,6 +250,8 @@ let _ =
                                     let _ = cs.take() in
                                       Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
+              "-special", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
+              "-listspecials", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. file mpp_init.ml";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
           in
@@ -234,7 +266,7 @@ let _ =
               aligned
               process_one_file
               ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
-~ If a file name doesn't have .mpp extension, it will output on stdout.
+~ If a file name doesn't have the .mpp extension, it will output on stdout.
 ~ If a file already exists, it won't be overwritten unless you use -overwrite.
 ~ If you want to overwrite only certain files, you should invoke this programme separately.
 ~ If you don't give any file name, it will use standard input (/dev/stdin).

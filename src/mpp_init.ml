@@ -20,6 +20,9 @@ let endline_comments_token = ref "%%"
 let open_comments_token = ref "/*"
 let close_comments_token = ref "*/"
 
+let open_special_token = ref "{{"
+let close_special_token = ref "}}"
+
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
@@ -31,3 +34,49 @@ let space_chars = Mpp_charset.of_list [' '; '\t']
 let blank_chars = Mpp_charset.of_list ['\n'; '\r';' '; '\t']
 
 
+(** special blocks *)
+type special_block_description = {
+  name : string;
+  command : string;
+  suffix: string;
+  print: string -> string;
+  char_escape : char -> string;
+  string_escape : string -> string;
+  force_line_number : ?filename:string -> int -> unit;
+}
+    
+
+let special_blocks = [
+  { name = "ocaml";
+    command = "ocaml";
+    suffix = ".ml";
+    print = (fun s -> Printf.sprintf " let _ = print_string \"%s\n\"\n" s);
+    string_escape = String.escaped;
+    char_escape = Char.escaped;
+    force_line_number = (fun ?(filename="") n -> Printf.printf "\n#%d\n" n);
+  };
+]
+
+let default_special_block = 
+  { name = "";
+    command = "";
+    suffix = "";
+    print = (fun s -> s);
+    string_escape = (fun x -> x);
+    char_escape = (fun x -> Char.escaped x);
+    force_line_number = (fun ?(filename="") _ -> ());
+  }
+
+let special : special_block_description ref = ref default_special_block
+
+let set_special s =
+  let r = List.find (fun { name ; _ } -> name = s) special_blocks in
+  special := r
+
+let list_specials () = 
+  Printf.printf "List of special blocks:\n";
+  List.iter 
+    (fun {name; _} -> Printf.printf "%s\n" name) 
+    special_blocks;
+  Pervasives.exit 0
+  

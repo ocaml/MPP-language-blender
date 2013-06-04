@@ -214,24 +214,26 @@ let match_token token charstream =
   if debug then 
     (let _filename, _line, _col = charstream.where () in
        Printf.eprintf "<token=%s@%d-%d----'%s'>\n%!" token _line _col (charstream_peek ~n:20 charstream));
-  let rec loop i taken =
-    if i >= String.length token then
-      true, []
-    else
-      match charstream.take() with
-        | None ->
-            false, taken
-        | Some c ->
-            if token.[i] = c then 
-              loop (succ i) (c::taken)
-            else
-              false, (c::taken)
-  in match loop 0 [] with
-    | true, _ ->
-        true
-    | false, taken ->
-        List.iter charstream.push taken; (* do not List.rev!! *)
-        false
+  token <> ""
+  && 
+    let rec loop i taken =
+      if i >= String.length token then
+        true, []
+      else
+        match charstream.take() with
+          | None ->
+              false, taken
+          | Some c ->
+              if token.[i] = c then 
+                loop (succ i) (c::taken)
+              else
+                false, (c::taken)
+    in match loop 0 [] with
+      | true, _ ->
+          true
+      | false, taken ->
+          List.iter charstream.push taken; (* do not List.rev!! *)
+          false
 
 
 let rec eat (cs:Mpp_charset.t) charstream =
