@@ -31,16 +31,16 @@ MPP is implemented in OCaml. The goal is to have a preprocessor that is
 easy to extend, easy to customize, and very powerful.
 It is powerful because it allows to use any programming language to programme
 your document, therefore you can actually turn your document into any programme,
-including nasty programmes such as viruses or bad jokes.
+including very bad jokes.
 It is still in active development because a lot of features are still to be implemented but
 it's already usable.
 
-
 # Log
 
+* 4 June 2013: new builtin: builtins (it is useful when trying MPP on stdin).
 * 4 June 2013: documentation of builtin commands.
 * 4 June 2013: new features: options -cc and -cl for builtin frag.
-* 4 June 2013: bug fix: builtin frag.
+* 4 June 2013: bug fix: options -tl and -tc for builtin frag.
 * 26 May 2013: new builtin: ignore.
 * 20 May 2013: new builtin: tryget (it's a get that won't fail).
 * 20 May 2013: new builtin: frag (for fragment), very useful to include parts of a file.
