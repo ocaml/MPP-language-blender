@@ -239,7 +239,7 @@ let _ =
 ~ If you want to overwrite only certain files, you should invoke this programme separately.
 ~ If you don't give any file name, it will use standard input (/dev/stdin).
 ~ This software does not care about characters encoding, hence it performs no conversion at all.
-~ As of May, 13th, 2013, this software is still under development. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
+~ This software is still under development, but core features are stable. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
 List of options:")
         end;
