@@ -270,7 +270,7 @@ let fragment args cs out =
 (* Register the functions to the builtin set. *)
 let () =
   Mpp_actions.register "ocamlhtmlcss" (Mpp_actions.Function html_of_ocaml_default_css) "Prints a CSS for ocamlhtml.";
-  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml) "OCaml syntax highlighting for OCaml.";
+  Mpp_actions.register "ocamlhtml" (Mpp_actions.Function html_of_ocaml) "OCaml syntax highlighting (outputs HTML).";
   Mpp_actions.register "ocamlcerror" (Mpp_actions.Function html_of_ocamlc) "Execute an ocamlc or ocamlopt command, and process (i.e. turn it into HTML) the output error message if any.";
   Mpp_actions.register "frag" (Mpp_actions.Function fragment) "Input a fragment of a file. Options: One of [-fr -fl -fc] to respectively specifiy a regular expression (OCaml module Str flavour), a line or a character number, from where the input should start. One of [-tr -tl -tc -cc -cl] to respectively specify a regular expression, a line, a character number, a character count or a line count. Example: [frag -fr \".*Hello.*\" -cc 42] will output 42 characters after the first line that matches the \".*Hello.*\" regular expression. (Matching lines are indeed excluded.)";
   ()
