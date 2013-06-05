@@ -1,0 +1,8 @@
+(( input data.mpp))
+
+Hello (( get name)), are you really (( get age))?!
+And you said "(( get interests))", I'm having a hard time believing you... Was it true?
+And please can you tell us why you chose (( ifndef gender not)) to tell us your gender?
+
+(( else Actually we don't care about your gender.))
+

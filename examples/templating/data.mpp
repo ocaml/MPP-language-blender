@@ -1,0 +1,4 @@
+(( set name Bob Simon Rule))
+(( set age 42))
+(( set interests I love painting and eating good food!))
+(( ignore set gender male))
