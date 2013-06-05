@@ -18,7 +18,7 @@ and documentation = string
 
 let actions : action_set ref = ref Mpp_stringmap.empty
 
-let stop_on_exec_error = ref false
+let ignore_exec_error = ref false
 
 (* *********************************************************** *)
 (* **begin library ******************************************* *)
@@ -47,7 +47,7 @@ let command arg charstream out =
       match ec with
         | 0 -> ()
         | _ ->
-            if !stop_on_exec_error then
+            if not (!ignore_exec_error) then
               Pervasives.failwith 
                 (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
                    arg ec file line column)

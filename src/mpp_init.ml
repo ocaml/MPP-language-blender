@@ -23,6 +23,8 @@ let close_comments_token = ref "*/"
 let open_special_token = ref "{{"
 let close_special_token = ref "}}"
 
+let ignore_orphan_closing_tokens = ref false
+
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
