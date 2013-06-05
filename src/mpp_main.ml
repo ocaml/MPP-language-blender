@@ -16,7 +16,7 @@ let rec preprocess (charstream:charstream) out =
   (* assert(!close_comments_token <> ""); *)
 
   let default_buffer = Buffer.create 4242 in
-  
+    
   (* entry point *)
   let rec loop (): unit =
     begin
@@ -135,12 +135,18 @@ let rec preprocess (charstream:charstream) out =
 
   (* Closing a block that hasn't been opened is wrong. *)
   and close_token_action() =
-    parse_error ~msg:"Closing unopened action block." (charstream.where());
-    exit 1
+    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+      begin
+        parse_error ~msg:"Closing unopened action block." (charstream.where());
+        exit 1
+      end
 
   and close_special_token_action() = 
-    parse_error ~msg:"Closing unopened special block." (charstream.where());
-    exit 1
+    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+      begin
+        parse_error ~msg:"Closing unopened special block." (charstream.where());
+        exit 1
+      end
 
   (* Just ignore what has to be ignored. *)
   and endline_comments_token_action() =
@@ -156,9 +162,12 @@ let rec preprocess (charstream:charstream) out =
       loop()
 
   (* Closing a comment block that hasn't been opened is wrong. *)
-  and close_comments_token_action() = 
-    parse_error ~msg:"Closing unopened comments block." (charstream.where());
-    exit 1
+  and close_comments_token_action() =
+    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+      begin
+        parse_error ~msg:"Closing unopened comments block." (charstream.where());
+        exit 1
+      end
   in 
     loop()
 
@@ -234,8 +243,9 @@ let _ =
               "-ow", Arg.Set(overwrite), " Alias for -overwrite.";
               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
               "-c", Arg.Set(continue), " Alias for -continue.";
-              "-ine", Arg.Set(ignore_non_existing_commands), " Ignore non existing commands instead of stopping. (Default is to stop.)";
-              "-see", Arg.Set(Mpp_actions.stop_on_exec_error), " Stop if an error has occurred when executing an external command. (Default is not to stop.)";
+              "-ine", Arg.Set(ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
+              "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
+              "-ioc", Arg.Set(Mpp_init.ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
               "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
               "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
@@ -255,13 +265,6 @@ let _ =
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
           in
-(*           let aligned = *)
-(*             let rec loop = function *)
-(*               | (("-set" as o), a, s) :: rest -> (o, a, (s.[2] <- ' ' ;s)) :: loop rest *)
-(*               | (o,a,s) :: rest -> (o,a,s) :: loop rest *)
-(*               | [] -> [] *)
-(*             in loop aligned *)
-(*           in  *)
             Arg.parse
               aligned
               process_one_file
@@ -270,6 +273,7 @@ let _ =
 ~ If a file already exists, it won't be overwritten unless you use -overwrite.
 ~ If you want to overwrite only certain files, you should invoke this programme separately.
 ~ If you don't give any file name, it will use standard input (/dev/stdin).
+~ If a token becomes empty, it removes the associated feature.
 ~ This software does not care about characters encoding, hence it performs no conversion at all.
 ~ This software is still under development, but core features are stable. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
