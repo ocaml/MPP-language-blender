@@ -44,7 +44,7 @@ type special_block_description = {
   print: string -> string;
   char_escape : char -> string;
   string_escape : string -> string;
-  force_line_number : ?filename:string -> int -> unit;
+  force_line_number : ?filename:string -> int -> string;
 }
     
 
@@ -52,10 +52,16 @@ let special_blocks = [
   { name = "ocaml";
     command = "ocaml";
     suffix = ".ml";
-    print = (fun s -> Printf.sprintf " let _ = print_string \"%s\n\"\n" s);
+    print = (fun s -> Printf.sprintf " let _ = print_string \"%s\\n\"\n" s);
     string_escape = String.escaped;
     char_escape = Char.escaped;
-    force_line_number = (fun ?(filename="") n -> Printf.printf "\n#%d\n" n);
+    force_line_number = (
+      fun ?(filename="") n ->
+        if filename = "" then
+          Printf.sprintf "\n# %d\n" n
+        else
+          Printf.sprintf "\n# %d \"%s\"\n" n filename
+    );
   };
 ]
 
@@ -66,7 +72,7 @@ let default_special_block =
     print = (fun s -> s);
     string_escape = (fun x -> x);
     char_escape = (fun x -> Char.escaped x);
-    force_line_number = (fun ?(filename="") _ -> ());
+    force_line_number = (fun ?(filename="") _ -> "");
   }
 
 let special : special_block_description ref = ref default_special_block

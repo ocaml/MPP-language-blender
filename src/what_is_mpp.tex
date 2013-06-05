@@ -1,0 +1,36 @@
+\documentclass{article}
+\title{MPP: a meta preprocessor and a language blender}
+\author{Philippe Wang}
+
+\begin{document}
+\maketitle
+MPP is yet another preprocessor.  As some other few preprocessors, MPP
+is generic  and may be  used with any text-based  programming language
+(e.g.,  ASM, C,  Java, ML,  Scheme) or  document  description language
+(e.g., HTML, LaTeX, Markdown). MPP may be given parameters in order to
+restrict or loosen its usage.
+
+MPP  is  a tool  designed  to  be used  both  by  non programmers  and
+programmers. First, it means that it is easy to use. For that, we made
+the syntax very simple and there is no need to understand for instance
+what a  function is. Second, it  means that programmers  should not be
+frustrated when using it. For  that, by design, MPP allows programmers
+to use any language as a preprocessor.
+
+For programmers who  are familiar with OCaml, it  is important to know
+that  MPP  is  designed  to   be  easily  extensible.  It  has  a  few
+entry-points that are designed for new features to be plugged.
+
+MPP will  stop on undefined variables,  which is a  feature that helps
+finding errors.   MPP allows to easily blend  programming languages in
+order to use them as  preprocessor languages. It is of course possible
+to use tools  such as Bash or Perl to  blend languages.  The advantage
+of MPP over such tools is that MPP is specially designed for that.
+
+MPP has a few layers.
+
+- MPP blocks: execute an action.
+- MPP special blocks: convert everything into a program that will output a processed version.
+- Not MPP blocks: verbatim output.
+
+\end{document}
