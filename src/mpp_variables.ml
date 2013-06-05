@@ -111,7 +111,7 @@ end = struct
       with Not_found -> 
         last_cond := true;
         output_charstream out css;
-        output_char out '\n';
+(*         output_char out '\n'; *)
         output_charstream out cs
 
   let elze s cs out =

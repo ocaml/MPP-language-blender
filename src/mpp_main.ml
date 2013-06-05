@@ -47,6 +47,7 @@ let rec preprocess (charstream:charstream) out =
 
   and flush_default() =
     Buffer.output_buffer out default_buffer;
+    Buffer.clear default_buffer;
     flush out
 
   (* default action *)

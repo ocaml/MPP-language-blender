@@ -69,7 +69,7 @@ let default_special_block =
     suffix = "";
     print = (fun s -> s);
     string_escape = (fun x -> x);
-    char_escape = (fun x -> Char.escaped x);
+    char_escape = (fun x -> String.make 1 x);
     force_line_number = (fun ?(filename="") _ -> "");
   }
 
