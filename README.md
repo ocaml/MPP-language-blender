@@ -37,6 +37,8 @@ it's already usable.
 
 # Log
 
+* 6 June 2013: new features are being pushed, so it's going to be fragile for a day or two. If something is broken, take a version of 4 June.
+* 5 June 2013: option -see replaced by -iee. Now all default behaviour will be to stop at any error, and options may be provided to ask MPP to ignore specific errors.
 * 4 June 2013: options -ignoreerrors and -soee replaced by -ine and -see.
 * 4 June 2013: new builtin: builtins (it is useful when trying MPP on stdin).
 * 4 June 2013: documentation of builtin commands are now activated: "mpp -builtins" will output the list of builtins with a small description.
