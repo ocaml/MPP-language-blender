@@ -12,6 +12,7 @@ exception Exit of int
 let exit i = raise (Exit i)
 
 let ignore_non_existing_commands = ref false
+let ignore_orphan_closing_tokens = ref false
 
 (* tokens *)
 let open_token = ref "(("
@@ -22,9 +23,6 @@ let close_comments_token = ref "*/"
 
 let open_special_token = ref "{{"
 let close_special_token = ref "}}"
-
-let ignore_orphan_closing_tokens = ref false
-
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 

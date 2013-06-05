@@ -47,8 +47,7 @@ let rec preprocess (charstream:charstream) out =
 
   and flush_default() =
     Buffer.output_buffer out default_buffer;
-    flush out;
-    loop()
+    flush out
 
   (* default action *)
   and default = function
@@ -76,7 +75,7 @@ let rec preprocess (charstream:charstream) out =
               (charstream.where());
             exit 1
     in
-    let () = 
+    let () =
       if debug then 
         Printf.eprintf "peek<%s>\n%!"
           (String.escaped (charstream_peek ~n:20 charstream))
@@ -106,7 +105,8 @@ let rec preprocess (charstream:charstream) out =
         | Some name -> 
             if debug then Printf.eprintf "name=<%s>%!" name;
             read_until_word charstream (name^ !close_token)
-        | None -> read_until_word charstream (!close_token)
+        | None -> 
+            read_until_word charstream (!close_token)
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
