@@ -1,36 +1,181 @@
-\documentclass{article}
+% -*- coding: utf-8; -*-
+\documentclass[a4paper]{article}
+
+\usepackage{fullpage}
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily,
+  backgroundcolor=\color{black!10},
+}
+
 \title{MPP: a meta preprocessor and a language blender}
+
 \author{Philippe Wang}
+
+
+\def\eg{\emph{e.g.}}
 
 \begin{document}
 \maketitle
-MPP is yet another preprocessor.  As some other few preprocessors, MPP
-is generic  and may be  used with any text-based  programming language
-(e.g.,  ASM, C,  Java, ML,  Scheme) or  document  description language
-(e.g., HTML, LaTeX, Markdown). MPP may be given parameters in order to
-restrict or loosen its usage.
+\begin{center}
+  OCaml Labs\\
+  The University of Cambridge Computer Laboratory, UK\\
+\end{center}
+\paragraph{MPP is yet another preprocessor.}
+As some other few preprocessors, MPP
+is  designed  to  be  generic  and  to be  used  with  any  text-based
+programming  language (e.g.,  ASM, C,  Java, ML,  Scheme)  or document
+description language  (e.g., HTML, LaTeX, Markdown). MPP  may be given
+parameters in  order to restrict or  loosen its usage. It  can also be
+extended to provide additional features.
 
-MPP  is  a tool  designed  to  be used  both  by  non programmers  and
-programmers. First, it means that it is easy to use. For that, we made
-the syntax very simple and there is no need to understand for instance
-what a  function is. Second, it  means that programmers  should not be
-frustrated when using it. For  that, by design, MPP allows programmers
-to use any language as a preprocessor.
+\paragraph{MPP  is  a tool  designed  to  be used  by  both  non-programmers  and
+programmers.} First, it means that it  has to be easy to use. For that,
+the  syntax was  made very  simple and  there is  very little  need to
+understand  what   ``programming''  means.   Second,   it  means  that
+programmers should not be frustrated  when using it. For that, MPP can
+be easily  extended and be  used to generate  a customized/specialized
+preprocessor.
 
-For programmers who  are familiar with OCaml, it  is important to know
-that  MPP  is  designed  to   be  easily  extensible.  It  has  a  few
-entry-points that are designed for new features to be plugged.
+MPP takes a file and processes its contents.  The output is the output
+from interpretation of special commands  and verbatim copy the rest of
+the  file.  The  usage may  be customized,  by using  special built-in
+commands,  command line  options, or  by modifying  the implementation
+(which is designed to be easy to modify).
 
-MPP will  stop on undefined variables,  which is a  feature that helps
-finding errors.   MPP allows to easily blend  programming languages in
-order to use them as  preprocessor languages. It is of course possible
-to use tools  such as Bash or Perl to  blend languages.  The advantage
-of MPP over such tools is that MPP is specially designed for that.
+Here follows an example of a LaTeX file intended to be processed by MPP,
+where tokens \texttt{((} and \texttt{))} are used to delimit a special 
+command:
+\begin{lstlisting}
+Executing the following command \texttt{mkdir -p a/b/c} 
+% (( cmd mkdir -p a/b/c ))
+creates a few directories.
+Here's the result of running the \texttt{tree} command afterwards:
+\begin{verbatim}
+(( cmd tree ))
+\end{verbatim}
+\end{lstlisting}
 
-MPP has a few layers.
+and the output is then:
+\begin{lstlisting}
+Executing the following command \texttt{mkdir -p a/b/c} 
+% 
+creates a few directories.
+Here's the result of running the \texttt{tree} command afterwards:  
+\begin{verbatim}
+.
+`-- a
+    `-- b
+        `-- c
 
-- MPP blocks: execute an action.
-- MPP special blocks: convert everything into a program that will output a processed version.
-- Not MPP blocks: verbatim output.
+3 directories, 0 files
+\end{verbatim}
+\end{lstlisting}
+This example used the \texttt{cmd} built-in command to execute an external
+shell command.
+
+\paragraph{MPP  is a language  blender} as  it allows  any programming
+language to  be smoothly used  as a preprocessing language.   Note that
+languages  such as  Perl  or Bash  also  allow this  kind of  practice
+however  MPP is  designed to  make  it a  lot easier,  safer and  more
+relevant.
+
+Let Tyu be a programming  language or a document description language.
+Let L be a programming language.   Say that one is writing a .tyu file
+and  wants  to  use  the  L programming  language  as  a  preprocessing
+language. 
+
+MPP makes this possible if it has been given a description to allow it
+to convert the  .tyu file into a program in the  L language that, when
+executed, prints back a .tuy  file. Inside the original .tyu file, one
+may  declare special  blocks and  use the  L language,  so  that those
+blocks are not converted but simply copied verbatim.
+This way, all blocks written in the L language share the same execution
+environment.
+
+For instance, if TUY=HTML and L=OCaml:
+
+Here follow the contents of file \texttt{f.html} to be processed by MPP and produces
+\texttt{tmp.ml}:
+\begin{lstlisting}
+<table>
+{{
+let () = 
+for i = 1 to 5 do
+ Printf.printf "<tr>";
+ for j = 1 to 5 do
+  Printf.printf "<td>%d</td>" (i*j)
+ done;
+ Printf.printf "</tr>\n";
+done
+}}
+</table>
+\end{lstlisting}
+
+Here follow the contents of \texttt{tmp.ml}:
+\begin{lstlisting}
+let () = Printf.printf "<table>\n"
+let () = 
+for i = 1 to 5 do
+ Printf.printf "<tr>";
+ for j = 1 to 5 do
+  Printf.printf "<td>%d</td>" (i*j)
+ done;
+ Printf.printf "</tr>\n";
+done
+let () = Printf.printf "</table>\n"
+\end{lstlisting}
+
+The resulting file is:
+\begin{lstlisting}
+<table>
+<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><td>2</td><td>4</td><td>6</td><td>8</td><td>10</td></tr>
+<tr><td>3</td><td>6</td><td>9</td><td>12</td><td>15</td></tr>
+<tr><td>4</td><td>8</td><td>12</td><td>16</td><td>20</td></tr>
+<tr><td>5</td><td>10</td><td>15</td><td>20</td><td>25</td></tr>
+</table>
+\end{lstlisting}
+
+As one  can see, tokens \verb+{{+  and \verb+}}+ allowed  to declare a
+special section  in file \texttt{f.html}.  Note that  these two tokens
+may be customized by the user of MPP when calling it.
+
+By invoking MPP multiple times with different block delimiters, one
+may blend as many languages as he/she may want to.
+
+\paragraph{Notes on MPP}
+The commands part and the language  blending part of MPP may happen in
+the same MPP execution or separately, this choice is up to the user.
+
+By default, MPP stops if any error occurs (\eg, access to an unbound
+variable, or external program exiting with nonzero), but options are
+provided to ignore such errors.
+
+\paragraph{About the implementation of MPP}
+MPP is implemented in OCaml and its set of features can be extended by
+registering additional features that are simple OCaml functions.
+
+MPP may also be used as a library for its simple generic lexing/parsing
+engine.
+
+MPP is not taking the approach of embedding something into OCaml. Instead,
+it allows to embed the language of your choice into any existing document.
+
+MPP  allows OCaml  to  be used  as  a preprocessing  language for  any
+program  or document  text file.  It provides  a generic  mechanism to
+allow  the  use  of   other  programming  languages  as  preprocessing
+languages.
+
+
+\paragraph{Conclusion}
+MPP is a original and powerful tool for both non-programmers and
+programmers.  It is even more powerful for OCaml programmers as they
+can easily extend MPP. 
+
+MPP is not intended to replace a tool such as Camlp4 or ppx, which
+are meant to extend specifically the OCaml language. MPP extends
+any language and is highly customizable.
 
 \end{document}
