@@ -1,7 +1,11 @@
 % -*- coding: utf-8; -*-
 \documentclass[a4paper]{article}
 
-\usepackage{fullpage}
+\usepackage{geometry} \geometry{reset, papersize={210mm,297mm},
+  left=25mm, right=25mm, vmargin=20mm, text={160mm,220mm},
+  includeheadfoot, headheight=0em, headsep=4em, hoffset=0cm,
+  voffset=0cm, footskip=4.5em, }
+
 \usepackage{listings}
 \usepackage{xcolor}
 \lstset{
@@ -185,9 +189,12 @@ the same MPP execution or separately, this choice is up to the user.
   of your choice as a text preprocessor.
 
 \end{itemize}
-\section{Conclusion}
+
+\section{Summary}
 MPP is a preprocessor: one can use MPP to preprocess any text file.
+
 MPP is a meta preprocessor: one can use MPP to generate a customized preprocessor.
+
 MPP is a language blender: one can use MPP to make virtually any programming language 
 their preprocessor language. 
 
@@ -198,5 +205,6 @@ is implemented in OCaml, MPP extensions are written in OCaml.
 
 MPP  is an  original and  powerful tool  for both  non-programmers and
 programmers.
+
 
 \end{document}
