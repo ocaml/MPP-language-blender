@@ -22,7 +22,7 @@
   OCaml Labs\\
   The University of Cambridge Computer Laboratory, UK\\
 \end{center}
-\paragraph{MPP is yet another preprocessor.}
+\section{MPP is yet another preprocessor}
 As some other few preprocessors, MPP
 is  designed  to  be  generic  and  to be  used  with  any  text-based
 programming  language (e.g.,  ASM, C,  Java, ML,  Scheme)  or document
@@ -30,11 +30,14 @@ description language  (e.g., HTML, LaTeX, Markdown). MPP  may be given
 parameters in  order to restrict or  loosen its usage. It  can also be
 extended to provide additional features.
 
-\paragraph{MPP  is  a tool  designed  to  be used  by  both  non-programmers  and
-programmers.} First, it means that it  has to be easy to use. For that,
-the  syntax was  made very  simple and  there is  very little  need to
-understand  what   ``programming''  means.   Second,   it  means  that
-programmers should not be frustrated  when using it. For that, MPP can
+\section{MPP is a tool designed to be easy to use}
+
+The syntax of MPP was made very simple and there is very little need
+to understand what ``programming'' means.  Moreover, it is possible to
+easily customize the syntax of MPP, so that MPP can provide precisely
+what its users need.
+
+Programmers should not be frustrated when using MPP. For that, MPP can
 be easily  extended and be  used to generate  a customized/specialized
 preprocessor.
 
@@ -44,9 +47,9 @@ the  file.  The  usage may  be customized,  by using  special built-in
 commands,  command line  options, or  by modifying  the implementation
 (which is designed to be easy to modify).
 
-Here follows an example of a LaTeX file intended to be processed by MPP,
-where tokens \texttt{((} and \texttt{))} are used to delimit a special 
-command:
+Here  follows an  example  of a  LaTeX  file that  is  intended to  be
+processed by MPP, where tokens \texttt{((} and \texttt{))} are used to
+delimit a special command:
 \begin{lstlisting}
 Executing the following command \texttt{mkdir -p a/b/c} 
 % (( cmd mkdir -p a/b/c ))
@@ -57,7 +60,7 @@ Here's the result of running the \texttt{tree} command afterwards:
 \end{verbatim}
 \end{lstlisting}
 
-and the output is then:
+and the output is:
 \begin{lstlisting}
 Executing the following command \texttt{mkdir -p a/b/c} 
 % 
@@ -72,14 +75,15 @@ Here's the result of running the \texttt{tree} command afterwards:
 3 directories, 0 files
 \end{verbatim}
 \end{lstlisting}
-This example used the \texttt{cmd} built-in command to execute an external
+N.B. This example used the \texttt{cmd} built-in command to execute an external
 shell command.
 
-\paragraph{MPP  is a language  blender} as  it allows  any programming
-language to  be smoothly used  as a preprocessing language.   Note that
-languages  such as  Perl  or Bash  also  allow this  kind of  practice
-however  MPP is  designed to  make  it a  lot easier,  safer and  more
-relevant.
+\section{MPP  is a language  blender}
+
+MPP  allows  any  programming  language  to  be  smoothly  used  as  a
+preprocessing language.  Note that languages such as Perl or Bash also
+allow this kind  of practice however MPP is designed to  make it a lot
+easier, safer and more relevant.
 
 Let Tyu be a programming  language or a document description language.
 Let L be a programming language.   Say that one is writing a .tyu file
@@ -145,37 +149,54 @@ may be customized by the user of MPP when calling it.
 By invoking MPP multiple times with different block delimiters, one
 may blend as many languages as he/she may want to.
 
-\paragraph{Notes on MPP}
+%\section{Notes on MPP}
 The commands part and the language  blending part of MPP may happen in
 the same MPP execution or separately, this choice is up to the user.
 
-By default, MPP stops if any error occurs (\eg, access to an unbound
-variable, or external program exiting with nonzero), but options are
-provided to ignore such errors.
-
-\paragraph{About the implementation of MPP}
-MPP is implemented in OCaml and its set of features can be extended by
-registering additional features that are simple OCaml functions.
-
-MPP may also be used as a library for its simple generic lexing/parsing
-engine.
-
-MPP is not taking the approach of embedding something into OCaml. Instead,
-it allows to embed the language of your choice into any existing document.
-
-MPP  allows OCaml  to  be used  as  a preprocessing  language for  any
-program  or document  text file.  It provides  a generic  mechanism to
-allow  the  use  of   other  programming  languages  as  preprocessing
-languages.
 
 
-\paragraph{Conclusion}
-MPP is a original and powerful tool for both non-programmers and
-programmers.  It is even more powerful for OCaml programmers as they
-can easily extend MPP. 
+\section{Notes about MPP}
+\begin{itemize}
+\item MPP is implemented in OCaml and its set of features can be
+  extended by registering additional features that are simple OCaml
+  functions.
 
-MPP is not intended to replace a tool such as Camlp4 or ppx, which
-are meant to extend specifically the OCaml language. MPP extends
-any language and is highly customizable.
+\item MPP may also be used as a library for its simple generic
+  lexing/parsing engine.
+
+
+\item MPP is not taking the approach of embedding something into
+  OCaml. Instead, it allows to embed the language of your choice into
+  any existing document.
+
+
+\item MPP allows OCaml to be used as a preprocessing language for any
+  program or document text file.  It provides a generic mechanism to
+  allow the use of other programming languages as preprocessing
+  languages.
+
+\item Let us note that, by default, MPP stops if any error occurs
+  (\eg, access to an unbound variable, or external program exiting
+  with nonzero), but options are provided to ignore such errors.
+
+\item MPP is not intended to replace a tool such as Camlp4 or ppx,
+  which are meant to extend the OCaml language. Instead, MPP provides
+  a small set of built-in commands, and allows you to use any language
+  of your choice as a text preprocessor.
+
+\end{itemize}
+\section{Conclusion}
+MPP is a preprocessor: one can use MPP to preprocess any text file.
+MPP is a meta preprocessor: one can use MPP to generate a customized preprocessor.
+MPP is a language blender: one can use MPP to make virtually any programming language 
+their preprocessor language. 
+
+MPP is also a set of OCaml modules that may be used as a library.
+
+MPP provides simple interfaces for programmers to extend MPP. As MPP
+is implemented in OCaml, MPP extensions are written in OCaml.  
+
+MPP  is an  original and  powerful tool  for both  non-programmers and
+programmers.
 
 \end{document}
