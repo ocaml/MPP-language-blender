@@ -18,7 +18,8 @@
 
 %\author{Philippe Wang\\\texttt{Philippe.Wang@cl.cam.ac.uk}}
 \author{Philippe Wang}
-\date{June 7, 2013}
+%\date{June 7, 2013}
+\date{}
 
 \def\eg{\emph{e.g.}}
 
@@ -34,7 +35,7 @@ is  designed  to  be  generic  and  to be  used  with  any  text-based
 programming  language (e.g.,  ASM, C,  Java, ML,  Scheme)  or document
 description language  (e.g., HTML, LaTeX, Markdown). MPP  may be given
 parameters in  order to restrict or  loosen its usage. It  can also be
-extended to provide additional features.
+extended to provide additional features, which  are in practice OCaml functions.
 
 \section{MPP is a tool designed to be easy to use}
 
@@ -195,25 +196,24 @@ the same MPP execution or separately, this choice is up to the user.
 
 \section{Summary}
 \begin{itemize}
-\item MPP is a preprocessor: one can use MPP to preprocess any text file.
+\item MPP is a preprocessor, as one may use MPP to preprocess any text file.
 
-\item MPP is a meta preprocessor: one can use MPP to generate a customized preprocessor.
+\item MPP is a meta preprocessor, as one may use MPP to generate a
+  customized preprocessor.
 
 
-\item MPP is a language blender: one can use MPP to make virtually any
-  programming language their preprocessing language.
-
+\item MPP is a language blender, as one may use MPP to make their
+  favourite programming language their favourite preprocessing
+  language.
 
 \item MPP is also a set of OCaml modules that may be used as a library.
 
+\item MPP provides simple interfaces for programmers to extend MPP,
+  using OCaml functions.
 
-\item MPP provides simple interfaces for programmers to extend MPP, using OCaml functions.
-
-
-\item MPP  is an  original and  powerful tool  for programmers but is also
-designed to be useful for non-programmers, who may use the core of MPP
-or a specialized version of MPP.
-
+\item MPP is an original and powerful tool for programmers but is also
+  designed to be useful for non-programmers who may use the core of
+  MPP or a specialized version of MPP.
 \end{itemize}
 
 \end{document}
