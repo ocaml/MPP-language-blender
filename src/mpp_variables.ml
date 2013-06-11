@@ -24,6 +24,7 @@ module Variable : sig
   val elzeifdef: string -> charstream -> out_channel -> unit
   val elze: string -> charstream -> out_channel -> unit
 end = struct
+  include Mpp_conditions
   include Map.Make(String)
   let suppress_spaces s =
     let b = Buffer.create (String.length s - 1) in
@@ -79,8 +80,6 @@ end = struct
           (cs.where());
         Pervasives.exit 1
 
-  let last_cond = ref true
-  let last_cond_exists = ref false
 
   let ifdef s cs out =
     if debug then Printf.eprintf "ifdef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
@@ -114,25 +113,6 @@ end = struct
 (*         output_char out '\n'; *)
         output_charstream out cs
 
-  let elze s cs out =
-    if !last_cond_exists then
-      begin
-        last_cond_exists := false;
-        if !last_cond then
-          ()
-        else
-          begin
-            output_string out s;
-            output_char out '\n';
-            output_charstream out cs
-          end
-      end
-    else
-      begin
-        parse_error ~msg:"`else' without a matching previous `if'."
-          (cs.where());
-        Pervasives.exit 1
-      end
 
   let elzeifdef s cs out =
     if !last_cond_exists then
