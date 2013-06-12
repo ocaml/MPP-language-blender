@@ -8,7 +8,9 @@
 open Mpp_charstream
 open Mpp_init
 
-let rec preprocess (charstream:charstream) out =
+module Out = Mpp_out
+
+let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
   (* assert(!open_token <> ""); *)
   (* assert(!close_token <> ""); *)
   (* assert(!endline_comments_token <> ""); *)
@@ -21,7 +23,10 @@ let rec preprocess (charstream:charstream) out =
   let rec loop (): unit =
     begin
       if match_token !open_token charstream then
-        open_token_action()
+        open_token_action ~nesting:false
+
+      else if match_token !open_nesting_token charstream then
+        open_token_action ~nesting:true
 
       else if match_token !endline_comments_token charstream then
         endline_comments_token_action()
@@ -46,9 +51,9 @@ let rec preprocess (charstream:charstream) out =
     end
 
   and flush_default() =
-    Buffer.output_buffer out default_buffer;
+    Out.output_buffer out default_buffer;
     Buffer.clear default_buffer;
-    flush out
+    Out.flush out
 
   (* default action *)
   and default = function
@@ -60,22 +65,12 @@ let rec preprocess (charstream:charstream) out =
   and open_special_token_action() =
     flush_default();
     let x = read_until_word charstream (!close_special_token) in
-      output_string out x;
+      Out.output_string out x;
       loop()
 
   (* new block *)
-  and open_token_action () =
+  and open_token_action ~nesting =
     flush_default();
-    let _action_nested_option =
-      match charstream.take() with
-        | Some '\\' -> `Not_Nested
-        | Some c -> charstream.push c; `Nested
-        | None ->
-            parse_error
-              ~msg:"No characters left to read right after an opening! (1)" 
-              (charstream.where());
-            exit 1
-    in
     let () =
       if debug then 
         Printf.eprintf "peek<%s>\n%!"
@@ -112,7 +107,11 @@ let rec preprocess (charstream:charstream) out =
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
       (* the contents of the block is converted into a charstream *)
-      charstream_of_string ~location:(block_start_location) block_contents
+      let l_bc = charstream_of_string ~location:(block_start_location) block_contents in
+        if nesting then
+          l_bc (* TODO: fix *)
+        else
+          l_bc
     in
     let action_name : string = (* name of the action *)
       eat space_chars blockcharstream;
@@ -222,7 +221,7 @@ let _ =
               end
             else
               begin
-                let out = open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename in
+                let out = Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename) in
                   preprocess (charstream_of_inchannel filename (open_in filename)) out;
                   at_least_one_file_processed := true
               end
@@ -230,7 +229,7 @@ let _ =
       else
         begin
           Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll output on stdout.\n%!" filename;
-          preprocess (charstream_of_inchannel filename (open_in filename)) stdout;
+          preprocess (charstream_of_inchannel filename (open_in filename)) (Out.Out_channel stdout);
           at_least_one_file_processed := true
         end
   in
@@ -282,7 +281,7 @@ List of options:")
         end;
 
       if not !at_least_one_file_processed then
-        preprocess (charstream_of_inchannel "/dev/stdin" stdin) stdout;
+        preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout);
     with e ->
       if debug then Printexc.print_backtrace stderr;
       if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);

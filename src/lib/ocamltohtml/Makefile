@@ -1,16 +1,24 @@
+MPP_LIB = ../../mpp_charstream.ml
+MPP_CMOs = $(addsuffix .cmo, $(basename $(MPP_LIB)))
+MPP_CMXs = $(addsuffix .cmx, $(basename $(MPP_LIB)))
+
+
+OCAMLC   = ocamlc $(MPP_CMOs)
+OCAMLOPT = ocamlopt $(MPP_CMXs)
+
 all : ocamltohtml
 
 ocamltohtml : ocamltohtml_lexer.cmo ocamltohtml_main.cmo
-	ocamlc $+ -o ocamltohtml
+	$(OCAMLC) $+ -o ocamltohtml
 
 ocamltohtml.opt : ocamltohtml_lexer.cmx ocamltohtml_main.cmx
-	ocamlopt $+ -o ocamltohtml
+	$(OCAMLOPT) $+ -o ocamltohtml
 
 %.cmo:%.ml
-	ocamlc -c $<
+	$(OCAMLC) -c $<
 
 %.cmx:%.ml
-	ocamlopt -c $<
+	$(OCAMLOPT) -c $<
 
 ocamltohtml_main.cmx:ocamltohtml_lexer.cmx
 ocamltohtml_main.cmo:ocamltohtml_lexer.cmo

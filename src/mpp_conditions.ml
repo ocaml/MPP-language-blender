@@ -5,6 +5,8 @@
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
 
+module Out = Mpp_out
+
 let last_cond = ref true
 let last_cond_exists = ref false
 
@@ -16,9 +18,9 @@ let elze s cs out =
         ()
       else
         begin
-          output_string out s;
-          output_char out '\n';
-          Mpp_charstream.output_charstream out cs
+          Out.output_string out s;
+          Out.output_char out '\n';
+          Out.output_charstream out cs
         end
     end
   else

@@ -11,6 +11,7 @@ exception Eof
 let debug = false
 
 let oc = ref stdout
+let ic = ref stdin
 
 let char_count = ref 0
 

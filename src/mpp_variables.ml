@@ -7,6 +7,7 @@
 
 open Mpp_charstream
 open Mpp_init
+module Out = Mpp_out
 
 (* variable environment *)
 type set = string Mpp_stringmap.t
@@ -15,14 +16,14 @@ let environment : set = Mpp_stringmap.empty
 
 module Variable : sig
   val set: string -> charstream -> 'ignored -> unit
-  val get: string -> charstream -> out_channel -> unit
-  val tryget: string -> charstream -> out_channel -> unit
+  val get: string -> charstream ->  Out.t -> unit
+  val tryget: string -> charstream ->  Out.t -> unit
   val unset: string -> charstream -> 'ignored -> unit
-  val unsetall: 'string -> 'charstream -> 'out_channel -> unit
-  val ifdef: string -> charstream -> out_channel -> unit
-  val ifndef: string -> charstream -> out_channel -> unit
-  val elzeifdef: string -> charstream -> out_channel -> unit
-  val elze: string -> charstream -> out_channel -> unit
+  val unsetall: 'string -> 'charstream ->  Out.t -> unit
+  val ifdef: string -> charstream ->  Out.t -> unit
+  val ifndef: string -> charstream ->  Out.t -> unit
+  val elzeifdef: string -> charstream ->  Out.t -> unit
+  val elze: string -> charstream ->  Out.t -> unit
 end = struct
   include Mpp_conditions
   include Map.Make(String)
@@ -56,7 +57,7 @@ end = struct
   let get s cs out =
     let s = suppress_spaces s in
       try
-        output_string out (find s !env)
+        Out.output_string out (find s !env)
       with Not_found ->
         parse_error
           ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
@@ -66,7 +67,7 @@ end = struct
   let tryget s cs out =
     let s = suppress_spaces s in
       try
-        output_string out (find s !env)
+        Out.output_string out (find s !env)
       with Not_found ->
         ()
 
@@ -90,9 +91,9 @@ end = struct
         begin
           ignore(find s !env);
           last_cond := true;
-          output_charstream out css;
-          output_char out '\n';
-          output_charstream out cs
+          Out.output_charstream out css;
+          Out.output_char out '\n';
+          Out.output_charstream out cs
         end
       with Not_found -> 
         last_cond := false
@@ -109,9 +110,8 @@ end = struct
         end
       with Not_found -> 
         last_cond := true;
-        output_charstream out css;
-(*         output_char out '\n'; *)
-        output_charstream out cs
+        Out.output_charstream out css;
+        Out.output_charstream out cs
 
 
   let elzeifdef s cs out =

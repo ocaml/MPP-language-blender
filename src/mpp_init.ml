@@ -17,12 +17,16 @@ let ignore_orphan_closing_tokens = ref false
 (* tokens *)
 let open_token = ref "(("
 let close_token = ref "))"
+
+let open_nesting_token = ref "{{"
+let close_nesting_token = ref "}}"
+
 let endline_comments_token = ref "%%"
 let open_comments_token = ref "/*"
 let close_comments_token = ref "*/"
 
-let open_special_token = ref "{{"
-let close_special_token = ref "}}"
+let open_special_token = ref "{<"
+let close_special_token = ref ">}"
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 

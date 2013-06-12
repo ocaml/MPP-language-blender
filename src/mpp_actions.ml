@@ -7,33 +7,34 @@
 open Mpp_charstream
 open Mpp_init
 open Mpp_variables
+module Out = Mpp_out
 
-type action =
-  | Function of (action_name -> charstream -> out_channel -> unit)
+type  action =
+  | Function of (action_name -> charstream ->  Out.t -> unit)
   | Command of string
 and action_name = string
 
-type action_set = (action*documentation) Mpp_stringmap.t
+type  action_set = ( action * documentation) Mpp_stringmap.t
 and documentation = string
 
-let actions : action_set ref = ref Mpp_stringmap.empty
+let actions :  action_set ref = ref Mpp_stringmap.empty
 
 let ignore_exec_error = ref false
 
 (* *********************************************************** *)
 (* **begin library ******************************************* *)
-let cat out filename =
+let cat (out:  Out.t) filename =
   if Sys.file_exists filename then
     let i = open_in filename in
       try while true do
-        output_char out (input_char i)
+        Out.output_char out (input_char i)
       done with End_of_file -> ()
   else
-    Printf.fprintf out
+    Printf.eprintf
       "builtin cat error: file <%s> doesn't exist.\n%!"
       filename
 
-let command arg charstream out =
+let command arg charstream (out: Out.t) =
   let file, line, column = charstream.where() in
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
@@ -55,12 +56,12 @@ let command arg charstream out =
               ()
 
 
-let builtins : action_set ref =
+let builtins :  action_set ref =
   let cmd = Function command in
   let echo =
-    Function(fun a _cs out -> output_string out a) in
+    Function(fun a _cs out -> Out.output_string out a) in
   let cat =
-    Function(fun filename _cs out -> cat out filename; flush out)
+    Function(fun filename _cs out -> cat out filename; Out.flush out)
   in
   let set = Function(Variable.set) in
   let unset = Function(Variable.unset) in
@@ -109,8 +110,8 @@ let builtins : action_set ref =
         "get", get, "Get the value of a variable, and if it does not exist, MPP stops. Related: set, tryget, unset, unsetall.";
         "unset", unset, "Unsets a variable. Related: tryget, get, tryget, unsetall.";
         "unsetall", unsetall, "Unset all variables. Related: tryget, get, tryget, unsetall.";
-        "cmd", cmd, "Executes the rest of the line as a shell command. Following lines (if any) are given as input of the shell command."; 
-        "echo", echo, "Prints the rest of the line."; 
+        "cmd", cmd, "Executes the rest of the line as a shell command. Following lines (if any) are given as input of the shell command.";
+        "echo", echo, "Prints the rest of the line.";
         "cat", cat, "Prints the contents of a file.";
         "setopen", set_opentoken, "Sets the opening token. Related: setclose.";
         "setclose", set_closetoken, "Sets the closing token. Related: setopen.";
@@ -142,7 +143,7 @@ let apply_builtin action_name location =
       end
 
 
-let exec (action_name:string) (arguments:string) (charstream:charstream) (out:out_channel) =
+let exec (action_name:string) (arguments:string) (charstream:charstream) (out: Out.t) =
   if debug then 
     begin
       Printf.eprintf "exec: %!";
@@ -179,7 +180,7 @@ let list_builtins () =
       !builtins;
     Pervasives.exit 0
 
-let register (name:string) (f:action) (d:documentation) : unit =
+let register (name:string) (f: action) (d:documentation) : unit =
   builtins := Mpp_stringmap.add name (f,d) !builtins
 
 let _ =
