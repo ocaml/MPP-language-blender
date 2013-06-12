@@ -7,7 +7,7 @@
 
 MPP_LIB = lib/ocamltohtml/ocamltohtml_lexer.ml
 
-MPP_MLs = mpp_charset.ml mpp_init.ml mpp_charstream.ml mpp_stringmap.ml mpp_variables.ml mpp_actions.ml mpp_core.ml $(MPP_LIB) mpp_libload.ml mpp_load.ml mpp_main.ml
+MPP_MLs = mpp_charset.ml mpp_init.ml mpp_charstream.ml mpp_stringmap.ml mpp_conditions.ml mpp_variables.ml mpp_actions.ml mpp_core.ml $(MPP_LIB) mpp_libload.ml mpp_load.ml mpp_main.ml
 MPP_CMOs = $(addsuffix .cmo, $(basename $(MPP_MLs)))
 MPP_CMXs = $(addsuffix .cmx, $(basename $(MPP_MLs)))
 
