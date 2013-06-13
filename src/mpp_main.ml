@@ -105,7 +105,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
             if debug then Printf.eprintf "name=<%s>%!" name;
             read_until_word charstream (name ^ (if nesting then !close_nesting_token else !close_token))
         | None -> 
-            read_until_word charstream (if nesting then !close_nesting_token else!close_token)
+            read_until_word charstream (if nesting then !close_nesting_token else !close_token)
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
@@ -200,6 +200,8 @@ let init() =
       [
         "setopen", (fun x _cs _out -> open_token := x), "Sets the opening token. Related: setclose.";
         "setclose", (fun x _cs _out -> close_token := x), "Sets the closing token. Related: setopen.";
+(*         "setopen", (fun x _cs _out -> open_token := x), "Sets the opening token. Related: setclose."; *)
+(*         "setclose", (fun x _cs _out -> close_token := x), "Sets the closing token. Related: setopen."; *)
         "setendlinecomments", (fun x _cs _out -> endline_comments_token := x), "Sets the endline comments token.";
         "setopencomments", (fun x _cs _out -> open_comments_token := x), "Sets the opening comments token. Related: setclosecomments.";
         "setclosecomments", (fun x _cs _out -> close_comments_token := x), "Sets the endline comments token. Related: setopencomments.";
@@ -263,29 +265,31 @@ let _ =
           let aligned =
             Arg.align [
               "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
-              "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files.";
-              "-ow", Arg.Set(overwrite), " Alias for -overwrite.";
-              "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-              "-c", Arg.Set(continue), " Alias for -continue.";
+(*               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files."; *)
+              "-w", Arg.Set(overwrite), " Overwrite existing destination files.";
+(*               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist."; *)
+              "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
               "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
               "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
-              "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
-              "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
-              "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
-              "-setopenspecialtoken", Arg.Set_string(open_special_token), "token Set open special token.";
-              "-setclosespecialtoken", Arg.Set_string(close_special_token), "token Set close special token.";
-              "-setopencomments", Arg.Set_string(open_comments_token), "token Set open comments token.";
-              "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
-              "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
+              "-b", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
+              "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
+              "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
+              "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
+              "-scn", Arg.Set_string(close_nesting_token), Printf.sprintf "token Set close token for blocks which allow nesting. Default is %s." !close_nesting_token;
+              "-sos", Arg.Set_string(open_special_token), Printf.sprintf "token Set open special token. Default is %s." !open_special_token;
+              "-scs", Arg.Set_string(close_special_token), Printf.sprintf "token Set close special token. Default is %s." !close_special_token;
+              "-soc", Arg.Set_string(open_comments_token), Printf.sprintf "token Set open comments token. Default is %s." !open_comments_token;
+              "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
+              "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
               "-set", Arg.String(fun s ->
                                    let cs = charstream_of_string s in 
                                    let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
                                    let _ = cs.take() in
                                      Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-              "-special", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
-              "-listspecials", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. file mpp_init.ml";
+              "-lang", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
+              "-listlang", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
           in
@@ -294,12 +298,11 @@ let _ =
               process_one_file
               ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
 ~ If a file name doesn't have the .mpp extension, it will output on stdout.
-~ If a file already exists, it won't be overwritten unless you use -overwrite.
-~ If you want to overwrite only certain files, you should invoke this programme separately.
 ~ If you don't give any file name, it will use standard input (/dev/stdin).
-~ If a token becomes empty, it removes the associated feature.
+~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
 ~ This software does not care about characters encoding, hence it performs no conversion at all.
-~ This software is still under development, but core features are stable. Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
+~ When an options exists to enable a feature, it means that it is disabled by default.
+~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
 List of options:")
         end;
