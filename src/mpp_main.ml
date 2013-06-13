@@ -8,15 +8,19 @@
 open Mpp_charstream
 open Mpp_init
 
+let debug =
+  try ignore(Sys.getenv "DEBUG") ; true with _ -> false
+
+let () = Mpp_charstream.debug := debug
+let () = Mpp_variables.debug := debug
+let () = Mpp_actions.debug := debug
+
+
+let ignore_orphan_closing_tokens = ref false
+
 module Out = Mpp_out
 
 let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
-  (* assert(!open_token <> ""); *)
-  (* assert(!close_token <> ""); *)
-  (* assert(!endline_comments_token <> ""); *)
-  (* assert(!open_comments_token <> ""); *)
-  (* assert(!close_comments_token <> ""); *)
-
   let default_buffer = Buffer.create 4242 in
     
   (* entry point *)
@@ -135,14 +139,14 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
 
   (* Closing a block that hasn't been opened is wrong. *)
   and close_token_action() =
-    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+    if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened action block." (charstream.where());
         exit 1
       end
 
   and close_special_token_action() = 
-    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+    if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened special block." (charstream.where());
         exit 1
@@ -163,30 +167,47 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
 
   (* Closing a comment block that hasn't been opened is wrong. *)
   and close_comments_token_action() =
-    if not (!Mpp_init.ignore_orphan_closing_tokens) then
+    if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened comments block." (charstream.where());
         exit 1
       end
   in 
-    loop()
-
+    loop();
+    flush_default()
 
 
 let init() =
-  (* This is here because the input builtin needs to access the
-     preprocess function.  *)
-  let builtin__input =
-    Mpp_actions.Function(fun arg cs out ->
-      let x = open_in arg in
-        cs.insert (charstream_of_inchannel arg x);
-        preprocess cs out;
-        close_in x
-    )
-  in
-    Mpp_actions.register "input" builtin__input "Input and process a file."
+  begin
+    (* This is here because the input builtin needs to access the
+       preprocess function.  *)
+    let builtin__input =
+      (fun arg cs out ->
+         let x = open_in arg in
+           cs.insert (charstream_of_inchannel arg x);
+           preprocess cs out;
+           close_in x
+      )
+    in
+      Mpp_actions.register "input" builtin__input "Input and process a file.";
+  end;
+  begin
+    List.iter
+      (fun (name, action, documentation) -> Mpp_actions.register name action documentation)
+      [
+        "setopen", (fun x _cs _out -> open_token := x), "Sets the opening token. Related: setclose.";
+        "setclose", (fun x _cs _out -> close_token := x), "Sets the closing token. Related: setopen.";
+        "setendlinecomments", (fun x _cs _out -> endline_comments_token := x), "Sets the endline comments token.";
+        "setopencomments", (fun x _cs _out -> open_comments_token := x), "Sets the opening comments token. Related: setclosecomments.";
+        "setclosecomments", (fun x _cs _out -> close_comments_token := x), "Sets the endline comments token. Related: setopencomments.";
+      ]
+  end
 
-let _ = 
+
+(**************************************************)
+(*****************INITIALISATION*******************)
+(**************************************************)
+let _ =
   let () = init() in
   let l = Array.length Sys.argv in
   let overwrite = ref false in
@@ -243,9 +264,9 @@ let _ =
               "-ow", Arg.Set(overwrite), " Alias for -overwrite.";
               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist.";
               "-c", Arg.Set(continue), " Alias for -continue.";
-              "-ine", Arg.Set(ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
+              "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
-              "-ioc", Arg.Set(Mpp_init.ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
+              "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
               "-builtins", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-setopentoken", Arg.Set_string(open_token), "token Set open token.";
               "-setclosetoken", Arg.Set_string(close_token), "token Set close token.";
@@ -255,10 +276,10 @@ let _ =
               "-setclosecomments", Arg.Set_string(close_comments_token), "token Set close comments token.";
               "-setendlinecomments", Arg.Set_string(endline_comments_token), "token Set endline comments token.";
               "-set", Arg.String(fun s ->
-                                    let cs = charstream_of_string s in 
-                                    let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
-                                    let _ = cs.take() in
-                                      Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
+                                   let cs = charstream_of_string s in 
+                                   let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
+                                   let _ = cs.take() in
+                                     Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-special", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
               "-listspecials", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. file mpp_init.ml";
@@ -279,13 +300,16 @@ let _ =
 
 List of options:")
         end;
-
       if not !at_least_one_file_processed then
-        preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout);
+        begin
+          preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout)
+        end;
     with e ->
-      if debug then Printexc.print_backtrace stderr;
+      let bt = Printexc.get_backtrace () in
+      if debug then Printf.eprintf "%s\n%!" bt;
       if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
       Pervasives.exit 1
+
 
 
 
