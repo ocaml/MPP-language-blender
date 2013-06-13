@@ -93,7 +93,7 @@ let fragment fl fc fr tl tc tr cl cc filename (out:Mpp_out.t) =
       begin match fl with
         | None -> ()
         | Some fl ->
-            while Input.where_line() < fl do
+            while Input.where_line() <= fl do
               ignore (Input.take_line())
             done;
             raise Next
@@ -101,7 +101,7 @@ let fragment fl fc fr tl tc tr cl cc filename (out:Mpp_out.t) =
       begin match fc with
         | None -> ()
         | Some fc ->
-            while Input.where_byte() < fc do
+            while Input.where_byte() <= fc do
               ignore (Input.take_byte())
             done;
             raise Next
