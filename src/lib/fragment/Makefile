@@ -1,24 +1,14 @@
-# OCAMLLIBS = str
-# OCAMLLIBS_CMA = $(addsuffix .cma, $(OCAMLLIBS))
-# OCAMLLIBS_CMXA = $(addsuffix .cmxa, $(OCAMLLIBS))
+all:frag
+	@echo If you want to install frag, please run the following command:
+	@echo PREFIX=/path/to/your/prefix make install
 
-# OCAMLC = ocamlc $(OCAMLLIBS_CMA)
-# OCAMLOPT = ocamlopt $(OCAMLLIBS_CMXA)
+# Re will eventually replace Str.
 
-# FRAG_MLs = libmpp_frag.ml frag.ml
-
-
-# frag:$(FRAG_CMOs)
-# 	$(OCAMLC) -g -o $@ $+
-
-# frag.opt:$(FRAG_CMXs)
-# 	$(OCAMLOPT) -g -o $@ $+
-
-
-frag:../../mpp_charset.cmo ../../mpp_charstream.cmo ../../mpp_out.cmo libmpp_fragment.ml mpp_tool_fragment.ml
+frag.byte:../../mpp_charset.cmo ../../mpp_charstream.cmo ../../mpp_out.cmo libmpp_fragment.ml mpp_tool_fragment.ml
 	ocamlfind ocamlc -thread -package re -package core -linkpkg str.cma -I ../../ mpp_charset.cmo mpp_charstream.cmo mpp_out.cmo -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
 
-frag.opt:../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx libmpp_fragment.ml mpp_tool_fragment.ml
+# Default uses ocamlopt because the Core library makes bytecode binaries too fat and too slow to load.
+frag:../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx libmpp_fragment.ml mpp_tool_fragment.ml
 	ocamlfind ocamlopt -thread -package re -package core -linkpkg str.cmxa -I ../../ mpp_charset.cmx mpp_charstream.cmx mpp_out.cmx -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
 
 ../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx:
@@ -26,4 +16,8 @@ frag.opt:../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx libmpp
 
 ../../mpp_charset.cmo ../../mpp_charstream.cmo ../../mpp_out.cmo:
 	cd ../.. && make mpp_charset.cmo mpp_charstream.cmo mpp_out.cmo
+
+
+install:frag.opt
+	cp frag.opt ${PREFIX}/bin/
 
