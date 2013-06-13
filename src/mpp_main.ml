@@ -288,7 +288,7 @@ let _ =
                                    let _ = cs.take() in
                                      Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-              "-lang", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
+              "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
               "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
