@@ -41,6 +41,7 @@ it's already usable.
 * 13 June 2013: note: a first release should be out soon.
 * 13 June 2013: command line option names have been shortened.
 * 13 June 2013: fragment feature has been moved to a standalone binary.
+* 13 June 2013: bug fixes.
 *  6 June 2013: new features are being pushed, so it's going to be fragile for few days. If something is broken, take a version of 4 June.
 *  6 June 2013: some bug fixes.
 *  5 June 2013: option -see replaced by -iee. Now all default behaviour will be to stop at any error, and options may be provided to ask MPP to ignore specific errors.
