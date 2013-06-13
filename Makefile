@@ -7,3 +7,10 @@ all:
 install:
 	cd src && make install
 
+installall:
+	cd src && make installall
+
+mpp:
+	cd src && make mpp
+frag:
+	cd src && make frag
