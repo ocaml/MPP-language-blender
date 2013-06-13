@@ -5,7 +5,9 @@
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
 
-type t = Buffer of Buffer.t | Out_channel of out_channel
+type t = 
+    | Buffer of Buffer.t
+    | Out_channel of out_channel
 
 let output_buffer o b = match o with
   | Buffer b' -> Buffer.add_buffer b' b
@@ -23,7 +25,8 @@ let output_char o c = match o with
   | Buffer b -> Buffer.add_char b c
   | Out_channel oc -> Pervasives.output_char oc c
 
-let printf o fmt = 
+let printf o fmt =
+  (* This printf function is provided by Benoît Vaugon *)
   let contains_flush fmt =
     let s = string_of_format fmt in
     let n = String.length s in
@@ -41,7 +44,8 @@ let printf o fmt =
           let b = Buffer.create 16 in
           let k b =
             Pervasives.output_string oc (Buffer.contents b);
-            if contains_flush fmt then Pervasives.flush oc in
+            if contains_flush fmt then Pervasives.flush oc
+          in
             Printf.kbprintf k b fmt
 
 let output_charstream o cs =
