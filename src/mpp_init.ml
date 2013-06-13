@@ -5,14 +5,12 @@
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
 
-let debug = 
-  try ignore(Sys.getenv "DEBUG") ; true with _ -> false
+(**************************************************)
+(**************CONFIGURATION***********************)
+(**************************************************)
 
 exception Exit of int
 let exit i = raise (Exit i)
-
-let ignore_non_existing_commands = ref false
-let ignore_orphan_closing_tokens = ref false
 
 (* tokens *)
 let open_token = ref "(("
@@ -33,6 +31,7 @@ let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 (* [space_chars] is like the IFS Bash special variable, 
    but this way of using it has not been tested yet. *)
 let space_chars = Mpp_charset.of_list [' '; '\t']
+
 
 (* [blank_chars] might not be used at all *)
 let blank_chars = Mpp_charset.of_list ['\n'; '\r';' '; '\t']
@@ -89,4 +88,6 @@ let list_specials () =
     (fun {name; _} -> Printf.printf "%s\n" name) 
     special_blocks;
   Pervasives.exit 0
-  
+
+(* PROPAGATION *)  
+let () = Mpp_variables.space_chars := space_chars

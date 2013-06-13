@@ -5,13 +5,14 @@
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
 open Mpp_charstream
-open Mpp_init
 open Mpp_variables
 module Out = Mpp_out
 
-type  action =
-  | Function of (action_name -> charstream ->  Out.t -> unit)
-  | Command of string
+let debug = ref false
+
+let ignore_non_existing_commands = ref false
+
+type  action = (action_name -> charstream ->  Out.t -> unit)
 and action_name = string
 
 type  action_set = ( action * documentation) Mpp_stringmap.t
@@ -57,37 +58,22 @@ let command arg charstream (out: Out.t) =
 
 
 let builtins :  action_set ref =
-  let cmd = Function command in
+  let cmd = command in
   let echo =
-    Function(fun a _cs out -> Out.output_string out a) in
+    (fun a _cs out -> Out.output_string out a) in
   let cat =
-    Function(fun filename _cs out -> cat out filename; Out.flush out)
+    (fun filename _cs out -> cat out filename; Out.flush out)
   in
-  let set = Function(Variable.set) in
-  let unset = Function(Variable.unset) in
-  let unsetall = Function(Variable.unsetall) in
-  let get = Function(Variable.get) in
-  let tryget = Function(Variable.tryget) in
-  let ifdef = Function(Variable.ifdef) in
-  let ifndef = Function(Variable.ifndef) in
-  let elzeifdef = Function(Variable.elzeifdef) in
-  let elze = Function(Variable.elze) in
-  let set_opentoken =
-    Function(fun x _cs _out -> open_token := x)
-  in
-  let set_closetoken =
-    Function(fun x _cs _out -> close_token := x)
-  in
-  let set_endline_comments_token =
-    Function(fun x _cs _out -> endline_comments_token := x)
-  in
-  let set_open_comments_token =
-    Function(fun x _cs _out -> open_comments_token := x)
-  in
-  let set_close_comments_token = 
-    Function(fun x _cs _out -> close_comments_token := x)
-  in
-  let error = Function(fun s cs _ -> 
+  let set = (Variable.set) in
+  let unset = (Variable.unset) in
+  let unsetall = (Variable.unsetall) in
+  let get = (Variable.get) in
+  let tryget = (Variable.tryget) in
+  let ifdef = (Variable.ifdef) in
+  let ifndef = (Variable.ifndef) in
+  let elzeifdef = (Variable.elzeifdef) in
+  let elze = (Variable.elze) in
+  let error = (fun s cs _ -> 
     parse_error 
       ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." s)
       (cs.where());
@@ -99,7 +85,7 @@ let builtins :  action_set ref =
       (fun r (k,e,doc) -> Mpp_stringmap.add k (e,doc) r)
       Mpp_stringmap.empty
       [
-        "ignore", Function(fun _ _ _ -> ()), "A command that does nothing with its arguments.";
+        "ignore", (fun _ _ _ -> ()), "A command that does nothing with its arguments.";
         "ifdef", ifdef, "If the argument is a defined variable, then inputs the rest.";
         "tryget", tryget, "Get the value of a variable, and if it doesn't exist, it does nothing.";
         "error", error, "Stops MPP.";
@@ -113,11 +99,6 @@ let builtins :  action_set ref =
         "cmd", cmd, "Executes the rest of the line as a shell command. Following lines (if any) are given as input of the shell command.";
         "echo", echo, "Prints the rest of the line.";
         "cat", cat, "Prints the contents of a file.";
-        "setopen", set_opentoken, "Sets the opening token. Related: setclose.";
-        "setclose", set_closetoken, "Sets the closing token. Related: setopen.";
-        "setendlinecomments", set_endline_comments_token, "Sets the endline comments token.";
-        "setopencomments", set_open_comments_token, "Sets the opening comments token. Related: setclosecomments.";
-        "setclosecomments", set_close_comments_token, "Sets the endline comments token. Related: setopencomments.";
       ]
   in ref r
 
@@ -127,8 +108,7 @@ let builtins :  action_set ref =
 let apply_builtin action_name location =
   try
     match Mpp_stringmap.find action_name !builtins with
-      | Function f, _ -> f
-      | Command s, _ -> Pervasives.failwith "Command not yet implemented."
+      | f, _ -> f
   with Not_found ->
     if !ignore_non_existing_commands then
       begin
@@ -144,7 +124,7 @@ let apply_builtin action_name location =
 
 
 let exec (action_name:string) (arguments:string) (charstream:charstream) (out: Out.t) =
-  if debug then 
+  if !debug then 
     begin
       Printf.eprintf "exec: %!";
       (* action_name : thing to do; arguments : arguments on the first
@@ -159,7 +139,7 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out: O
       (apply_builtin "cmd" (charstream.where()))
         (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ arguments)
         charstream out;
-      if debug then Printf.eprintf "???%!";
+      if !debug then Printf.eprintf "???%!";
     end
 
 
@@ -186,7 +166,7 @@ let register (name:string) (f: action) (d:documentation) : unit =
 let _ =
   register
     "builtins"
-    (Function (fun _ _ _ -> list_builtins()))
+    (fun _ _ _ -> list_builtins())
     "List all available builtins."
 
 

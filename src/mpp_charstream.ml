@@ -4,7 +4,9 @@
 (* Licence : CeCILL-B                                                  *)
 (* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
 (***********************************************************************)
-open Mpp_init
+(* open Mpp_init *)
+
+let debug = ref false
 
 type charstream = {
   take : unit -> char option;
@@ -211,7 +213,7 @@ let charstream_of_string  ?(location:location=("<anon-string>",0,0)) (s:string) 
 
 
 let match_token token charstream =
-  if debug then 
+  if !debug then 
     (let _filename, _line, _col = charstream.where () in
        Printf.eprintf "<token=%s@%d-%d----'%s'>\n%!" token _line _col (String.escaped(charstream_peek ~n:20 charstream)));
   let res =
@@ -251,13 +253,13 @@ let rec eat (cs:Mpp_charset.t) charstream =
 
 
 let read_until ?(failsafe=false) c charstream : string =
-  if debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
+  if !debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with
       | Some z ->
           let () =
-            if debug then 
+            if !debug then 
               Printf.eprintf "Peek<%s>\n%!"
                 (String.escaped (charstream_peek ~n:20 charstream)) 
           in
@@ -282,7 +284,7 @@ let read_until ?(failsafe=false) c charstream : string =
   in loop ()
 
 let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
-  if debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
+  if !debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with
@@ -320,7 +322,7 @@ let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(
 
 (* This has to be patched to accept other integers than natural numbers. *)
 let parse_int charstream =
-  if debug then Printf.eprintf "parse_int\n%!";
+  if !debug then Printf.eprintf "parse_int\n%!";
   (*   let start = charstream.where() in *)
   let res = Buffer.create 42 in
   let rec loop () =
@@ -332,42 +334,6 @@ let parse_int charstream =
   in
     loop ();
     int_of_string (Buffer.contents res)
-
-
-(*
-(* Parses a string in the format "([^\\]|(\\\\)|(\\\"))*" *)
-let parse_string charstream =
-  if debug then Printf.eprintf "parse_string\n%!";
-  (* We assume that a '"' character has just been consumed. *)
-  let start = charstream.where() in
-  let res = Buffer.create 42 in
-  let rec loop () =
-    match charstream.take() with
-      | Some '"' -> Buffer.contents res
-      | Some '\\' ->
-          begin
-            match charstream.take() with
-              | Some ('"' | '\\' as c) -> Buffer.add_char res c; loop()
-              | Some c ->
-                  parse_error
-                    ~msg:"Unrecognized backslash usage."
-                    (charstream.where());
-                  exit 1
-              | None ->
-                  parse_error
-                    ~msg:"Unrecognized backslash usage, and unexpected end of file."
-                    (charstream.where());
-                  exit 1
-          end
-      | Some c -> Buffer.add_char res c; loop()
-      | None -> 
-          parse_error
-            ~start:start
-            ~msg:"Unexpected end of file." 
-            (charstream.where());
-          exit 1
-  in loop ()
-*)
 
 
 (* Reads until an exact word is found.

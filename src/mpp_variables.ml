@@ -6,7 +6,10 @@
 (***********************************************************************)
 
 open Mpp_charstream
-open Mpp_init
+
+let space_chars = ref (Mpp_charset.of_list [' '; '\t'])
+let debug = ref false
+
 module Out = Mpp_out
 
 (* variable environment *)
@@ -44,7 +47,7 @@ end = struct
   let set s cs _ =
     let css = charstream_of_string s in
     let variable =
-      read_until_one_of space_chars css
+      read_until_one_of !space_chars css
     in
     let value = 
       match string_of_charstream cs with
@@ -83,9 +86,9 @@ end = struct
 
 
   let ifdef s cs out =
-    if debug then Printf.eprintf "ifdef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
+    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
     let css = charstream_of_string s in
-    let s = read_until_one_of space_chars css in
+    let s = read_until_one_of !space_chars css in
       last_cond_exists := true;
       try
         begin
@@ -99,9 +102,9 @@ end = struct
         last_cond := false
 
   let ifndef s cs out =
-    if debug then Printf.eprintf "ifndef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
+    if !debug then Printf.eprintf "ifndef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
     let css = charstream_of_string s in
-    let s = read_until_one_of space_chars css in
+    let s = read_until_one_of !space_chars css in
       last_cond_exists := true;
       try
         begin

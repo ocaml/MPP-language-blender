@@ -10,7 +10,7 @@ module Out = Mpp_out
 exception Break
 exception Next
 
-let fragment args cs out =
+let fragment args cs (out:Out.t) =
   let open Mpp_charstream in
   let open Mpp_init in
   let location = cs.where() in
