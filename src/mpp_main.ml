@@ -15,7 +15,6 @@ let () = Mpp_charstream.debug := debug
 let () = Mpp_variables.debug := debug
 let () = Mpp_actions.debug := debug
 
-
 let ignore_orphan_closing_tokens = ref false
 
 module Out = Mpp_out
