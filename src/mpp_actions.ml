@@ -24,7 +24,7 @@ let ignore_exec_error = ref false
 
 (* *********************************************************** *)
 (* **begin library ******************************************* *)
-let cat (out:  Out.t) filename =
+let cat (out:Out.t) filename =
   if Sys.file_exists filename then
     let i = open_in filename in
       try while true do
@@ -35,7 +35,7 @@ let cat (out:  Out.t) filename =
       "builtin cat error: file <%s> doesn't exist.\n%!"
       filename
 
-let command arg charstream (out: Out.t) =
+let command arg charstream (out:Out.t) =
   let file, line, column = charstream.where() in
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
@@ -56,6 +56,20 @@ let command arg charstream (out: Out.t) =
             else
               ()
 
+let copy ~trunc filename cs (out:Out.t) =
+  let s = Mpp_charstream.string_of_charstream cs in
+  let o =
+    if trunc then
+      open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 filename
+    else
+      open_out_gen [Open_wronly;Open_creat;Open_binary] 0o640 filename
+  in
+  let f = Out.Out_channel o in
+    Out.output_string f s;
+    Out.flush f;
+    Pervasives.close_out o;
+    Out.output_string out s
+  
 
 let builtins :  action_set ref =
   let cmd = command in
@@ -94,11 +108,13 @@ let builtins :  action_set ref =
         "elseifdef", elzeifdef, "If the previous test was not satisfied and the variable exists, then outputs the rest.";
         "set", set, "Set the variable to the rest. Related: get, tryget, unset, unsetall.";
         "get", get, "Get the value of a variable, and if it does not exist, MPP stops. Related: set, tryget, unset, unsetall.";
-        "unset", unset, "Unsets a variable. Related: tryget, get, tryget, unsetall.";
+        "unset", unset, "Unset a variable. Related: tryget, get, tryget, unsetall.";
         "unsetall", unsetall, "Unset all variables. Related: tryget, get, tryget, unsetall.";
-        "cmd", cmd, "Executes the rest of the line as a shell command. Following lines (if any) are given as input of the shell command.";
-        "echo", echo, "Prints the rest of the line.";
-        "cat", cat, "Prints the contents of a file.";
+        "cmd", cmd, "Execute the rest of the line as a shell command. Following lines (if any) are given as input of the shell command.";
+        "echo", echo, "Print the rest of the line.";
+        "cat", cat, "Print the contents of a file.";
+        "copy", copy ~trunc:false, "Copy the block to a file.";
+        "tcopy", copy ~trunc:true, "Copy the block to a file, empty it first if it already exists.";
       ]
   in ref r
 
