@@ -37,15 +37,18 @@ it's already usable.
 
 # Log
 
-* from 7 June 2013: until further notice, please consider that large refactoring is taking place.
-* 6 June 2013: new features are being pushed, so it's going to be fragile for a day or two. If something is broken, take a version of 4 June.
-* 6 June 2013: some bug fixes.
-* 5 June 2013: option -see replaced by -iee. Now all default behaviour will be to stop at any error, and options may be provided to ask MPP to ignore specific errors.
-* 4 June 2013: options -ignoreerrors and -soee replaced by -ine and -see.
-* 4 June 2013: new builtin: builtins (it is useful when trying MPP on stdin).
-* 4 June 2013: documentation of builtin commands are now activated: "mpp -builtins" will output the list of builtins with a small description.
-* 4 June 2013: new features: options -cc and -cl for builtin frag.
-* 4 June 2013: bug fix: options -tl and -tc for builtin frag.
+
+* 13 June 2013: note: a first release should be out soon.
+* 13 June 2013: command line option names have been shortened.
+* 13 June 2013: fragment feature has been moved to a standalone binary.
+*  6 June 2013: new features are being pushed, so it's going to be fragile for few days. If something is broken, take a version of 4 June.
+*  6 June 2013: some bug fixes.
+*  5 June 2013: option -see replaced by -iee. Now all default behaviour will be to stop at any error, and options may be provided to ask MPP to ignore specific errors.
+*  4 June 2013: options -ignoreerrors and -soee replaced by -ine and -see.
+*  4 June 2013: new builtin: builtins (it is useful when trying MPP on stdin).
+*  4 June 2013: documentation of builtin commands are now activated: "mpp -builtins" will output the list of builtins with a small description.
+*  4 June 2013: new features: options -cc and -cl for builtin frag.
+*  4 June 2013: bug fix: options -tl and -tc for builtin frag.
 * 26 May 2013: new builtin: ignore.
 * 20 May 2013: new builtin: tryget (it's a get that won't fail).
 * 20 May 2013: new builtin: frag (for fragment), very useful to include parts of a file.
