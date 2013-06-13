@@ -103,16 +103,20 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       match block_name with
         | Some name -> 
             if debug then Printf.eprintf "name=<%s>%!" name;
-            read_until_word charstream (name^ !close_token)
+            read_until_word charstream (name ^ (if nesting then !close_nesting_token else !close_token))
         | None -> 
-            read_until_word charstream (!close_token)
+            read_until_word charstream (if nesting then !close_nesting_token else!close_token)
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
       (* the contents of the block is converted into a charstream *)
       let l_bc = charstream_of_string ~location:(block_start_location) block_contents in
         if nesting then
-          l_bc (* TODO: fix *)
+          begin
+            let buff = Buffer.create 42 in
+              preprocess l_bc (Out.Buffer buff);
+              charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
+          end
         else
           l_bc
     in
