@@ -1,0 +1,5 @@
+mpp -snl < f2.mpp > f2.snl.out
+diff f2.snl.out f2.snl.expected
+
+mpp < f2.mpp > f2.out
+diff f2.out f2.expected
