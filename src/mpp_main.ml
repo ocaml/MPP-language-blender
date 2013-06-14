@@ -16,6 +16,7 @@ let () = Mpp_variables.debug := debug
 let () = Mpp_actions.debug := debug
 
 let ignore_orphan_closing_tokens = ref false
+let save_newlines = ref false
 
 module Out = Mpp_out
 
@@ -106,6 +107,14 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
             read_until_word charstream (name ^ (if nesting then !close_nesting_token else !close_token))
         | None -> 
             read_until_word charstream (if nesting then !close_nesting_token else !close_token)
+    in
+    let () = 
+      if !save_newlines then 
+        begin match charstream.take() with
+          | Some '\n' -> ()
+          | Some c -> charstream.push c
+          | None -> ()
+        end
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
@@ -290,6 +299,7 @@ let _ =
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
               "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
+              "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
           in
