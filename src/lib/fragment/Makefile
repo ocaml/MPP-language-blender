@@ -5,11 +5,11 @@ all:frag
 # Re will eventually replace Str.
 
 frag.byte:../../mpp_charset.cmo ../../mpp_charstream.cmo ../../mpp_out.cmo libmpp_fragment.ml mpp_tool_fragment.ml
-	ocamlfind ocamlc -thread -package re -package core -linkpkg str.cma -I ../../ mpp_charset.cmo mpp_charstream.cmo mpp_out.cmo -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
+	ocamlfind ocamlc -thread -package str,re,core -linkpkg -I ../../ mpp_charset.cmo mpp_charstream.cmo mpp_out.cmo -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
 
 # Default uses ocamlopt because the Core library makes bytecode binaries too fat and too slow to load.
 frag:../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx libmpp_fragment.ml mpp_tool_fragment.ml
-	ocamlfind ocamlopt -thread -package re -package core -linkpkg str.cmxa -I ../../ mpp_charset.cmx mpp_charstream.cmx mpp_out.cmx -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
+	ocamlfind ocamlopt -thread -package str,re,core -linkpkg -I ../../ mpp_charset.cmx mpp_charstream.cmx mpp_out.cmx -o $@ libmpp_fragment.ml mpp_tool_fragment.ml
 
 ../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx:
 	cd ../.. && make mpp_charset.cmx mpp_charstream.cmx mpp_out.cmx
