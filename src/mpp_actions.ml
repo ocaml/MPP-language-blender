@@ -12,10 +12,10 @@ let debug = ref false
 
 let ignore_non_existing_commands = ref false
 
-type  action = (action_name -> charstream ->  Out.t -> unit)
+type  action = (bool option ref -> action_name -> charstream ->  Out.t -> unit)
 and action_name = string
 
-type  action_set = ( action * documentation) Mpp_stringmap.t
+type  action_set = (action * documentation) Mpp_stringmap.t
 and documentation = string
 
 let actions :  action_set ref = ref Mpp_stringmap.empty
@@ -56,7 +56,7 @@ let command arg charstream (out:Out.t) =
             else
               ()
 
-let copy ~trunc filename cs (out:Out.t) =
+let copy ~trunc __last_cond filename cs (out:Out.t) =
   let s = Mpp_charstream.string_of_charstream cs in
   let o =
     if trunc then
@@ -72,22 +72,22 @@ let copy ~trunc filename cs (out:Out.t) =
   
 
 let builtins :  action_set ref =
-  let cmd = command in
-  let echo =
+  let cmd _ = command in
+  let echo _ =
     (fun a _cs out -> Out.output_string out a) in
-  let cat =
+  let cat _ =
     (fun filename _cs out -> cat out filename; Out.flush out)
   in
-  let set = (Variable.set) in
-  let unset = (Variable.unset) in
-  let unsetall = (Variable.unsetall) in
-  let get = (Variable.get) in
-  let tryget = (Variable.tryget) in
-  let ifdef = (Variable.ifdef) in
-  let ifndef = (Variable.ifndef) in
-  let elzeifdef = (Variable.elzeifdef) in
-  let elze = (Variable.elze) in
-  let error = (fun s cs _ -> 
+  let set _ = Variable.set in
+  let unset _ = Variable.unset in
+  let unsetall _ = Variable.unsetall in
+  let get _ = Variable.get in
+  let tryget _ = Variable.tryget in
+  let ifdef = Variable.ifdef in
+  let ifndef = Variable.ifndef in
+  let elzeifdef = Variable.elzeifdef in
+  let elze = Variable.elze in
+  let error = (fun _ s cs _ -> 
     parse_error 
       ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." s)
       (cs.where());
@@ -99,7 +99,7 @@ let builtins :  action_set ref =
       (fun r (k,e,doc) -> Mpp_stringmap.add k (e,doc) r)
       Mpp_stringmap.empty
       [
-        "ignore", (fun _ _ _ -> ()), "A command that does nothing with its arguments.";
+        "ignore", (fun _ _ _ _ -> ()), "A command that does nothing with its arguments.";
         "ifdef", ifdef, "If the argument is a defined variable, then inputs the rest.";
         "tryget", tryget, "Get the value of a variable, and if it doesn't exist, it does nothing.";
         "error", error, "Stops MPP.";
@@ -128,7 +128,8 @@ let apply_builtin action_name location =
   with Not_found ->
     if !ignore_non_existing_commands then
       begin
-        fun _ _ _ -> ()
+      (* type  action = (bool option ref -> action_name -> charstream ->  Out.t -> unit) *)
+        fun _last_cond _action_name _charstream _out -> ()
       end
     else
       begin
@@ -139,7 +140,7 @@ let apply_builtin action_name location =
       end
 
 
-let exec (action_name:string) (arguments:string) (charstream:charstream) (out: Out.t) =
+let exec (last_cond:bool option ref) (action_name:string) (arguments:string) (charstream:charstream) (out: Out.t) =
   if !debug then 
     begin
       Printf.eprintf "exec: %!";
@@ -149,10 +150,10 @@ let exec (action_name:string) (arguments:string) (charstream:charstream) (out: O
         action_name arguments;
     end;
   if action_name.[0] <> '-' then
-    (apply_builtin action_name (charstream.where())) arguments charstream out
+    (apply_builtin action_name (charstream.where())) last_cond arguments charstream out
   else
     begin
-      (apply_builtin "cmd" (charstream.where()))
+      (apply_builtin "cmd" (charstream.where())) last_cond
         (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ arguments)
         charstream out;
       if !debug then Printf.eprintf "???%!";

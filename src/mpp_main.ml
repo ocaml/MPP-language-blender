@@ -24,13 +24,13 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   let default_buffer = Buffer.create 4242 in
     
   (* entry point *)
-  let rec loop (): unit =
+  let rec loop (last_cond:bool option ref) : unit =
     begin
       if match_token !open_token charstream then
-        open_token_action ~nesting:false
+        open_token_action last_cond ~nesting:false
 
       else if match_token !open_nesting_token charstream then
-        open_token_action ~nesting:true
+        open_token_action last_cond ~nesting:true
 
       else if match_token !endline_comments_token charstream then
         endline_comments_token_action()
@@ -51,8 +51,9 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         close_comments_token_action()
 
       else
-        default(charstream.take())
-    end
+        default last_cond (charstream.take())
+    end;
+    loop last_cond
 
   and flush_default() =
     Out.output_buffer out default_buffer;
@@ -60,20 +61,19 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     Out.flush out
 
   (* default action *)
-  and default = function
+  and default last_cond = function
     | None -> ()
     | Some c ->
         Buffer.add_string default_buffer (!Mpp_init.special.char_escape c);
-        loop()
+        loop last_cond
 
-  and open_special_token_action() =
+  and open_special_token_action last_cond =
     flush_default();
     let x = read_until_word charstream (!close_special_token) in
-      Out.output_string out x;
-      loop()
+      Out.output_string out x
 
   (* new block *)
-  and open_token_action ~nesting =
+  and open_token_action last_cond ~nesting =
     flush_default();
     let () =
       if debug then 
@@ -146,8 +146,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | None ->
             ""
     in
-      Mpp_actions.exec action_name action_arguments blockcharstream out;
-      loop ()
+      Mpp_actions.exec last_cond action_name action_arguments blockcharstream out
 
   (* Closing a block that hasn't been opened is wrong. *)
   and close_token_action() =
@@ -167,15 +166,13 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   (* Just ignore what has to be ignored. *)
   and endline_comments_token_action() =
     let _l = read_until_one_of newline_chars charstream in
-      if debug then Printf.eprintf  "comments: <%s>\n%!" _l;
-      loop()
+      if debug then Printf.eprintf  "comments: <%s>\n%!" _l
 
   (* New comment block. *)
   and open_comments_token_action() =
     flush_default();
     let _c = read_until_word charstream (!close_comments_token) in
-      if debug then Printf.eprintf  "comments: <%s>\n%!" _c;
-      loop()
+      if debug then Printf.eprintf  "comments: <%s>\n%!" _c
 
   (* Closing a comment block that hasn't been opened is wrong. *)
   and close_comments_token_action() =
@@ -185,7 +182,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         exit 1
       end
   in 
-    loop();
+    loop (ref None);
     flush_default()
 
 
@@ -194,7 +191,7 @@ let init() =
     (* This is here because the input builtin needs to access the
        preprocess function.  *)
     let builtin__input =
-      (fun arg cs out ->
+      (fun __last_cond arg cs out ->
          let x = open_in arg in
            cs.insert (charstream_of_inchannel arg x);
            preprocess cs out;
@@ -207,13 +204,13 @@ let init() =
     List.iter
       (fun (name, action, documentation) -> Mpp_actions.register name action documentation)
       [
-        "setopen", (fun x _cs _out -> open_token := x), "Sets the opening token. Related: setclose.";
-        "setclose", (fun x _cs _out -> close_token := x), "Sets the closing token. Related: setopen.";
-(*         "setopen", (fun x _cs _out -> open_token := x), "Sets the opening token. Related: setclose."; *)
-(*         "setclose", (fun x _cs _out -> close_token := x), "Sets the closing token. Related: setopen."; *)
-        "setendlinecomments", (fun x _cs _out -> endline_comments_token := x), "Sets the endline comments token.";
-        "setopencomments", (fun x _cs _out -> open_comments_token := x), "Sets the opening comments token. Related: setclosecomments.";
-        "setclosecomments", (fun x _cs _out -> close_comments_token := x), "Sets the endline comments token. Related: setopencomments.";
+        "so", (fun _lc x _cs _out -> open_token := x), "Sets the opening token. Related: sc.";
+        "sc", (fun _lc x _cs _out -> close_token := x), "Sets the closing token. Related: so.";
+        "sso", (fun _lc x _cs _out -> open_special_token := x), "Sets the special opening token. Related: ssc.";
+        "ssc", (fun _lc x _cs _out -> close_special_token := x), "Sets the special closing token. Related: sso.";
+        "sec", (fun _lc x _cs _out -> endline_comments_token := x), "Sets the endline comments token.";
+        "soc", (fun _lc x _cs _out -> open_comments_token := x), "Sets the opening comments token. Related: scc.";
+        "scc", (fun _lc x _cs _out -> close_comments_token := x), "Sets the endline comments token. Related: soc.";
       ]
   end
 

@@ -7,25 +7,22 @@
 
 module Out = Mpp_out
 
-let last_cond = ref true
-let last_cond_exists = ref false
+let elze last_cond s cs out =
+  match !last_cond with
+    | None ->
+        Mpp_charstream.parse_error ~msg:"`else' without a matching previous `if'."
+          (cs.Mpp_charstream.where());
+        Pervasives.exit 1
+    | Some c ->
+        last_cond := None;
+        if c then
+          ()
+        else
+          begin
+            Out.output_string out s;
+            Out.output_char out '\n';
+            Out.output_charstream out cs
+          end
 
-let elze s cs out =
-  if !last_cond_exists then
-    begin
-      last_cond_exists := false;
-      if !last_cond then
-        ()
-      else
-        begin
-          Out.output_string out s;
-          Out.output_char out '\n';
-          Out.output_charstream out cs
-        end
-    end
-  else
-    begin
-      Mpp_charstream.parse_error ~msg:"`else' without a matching previous `if'."
-        (cs.Mpp_charstream.where());
-      Pervasives.exit 1
-    end
+
+ 

@@ -23,10 +23,10 @@ module Variable : sig
   val tryget: string -> charstream ->  Out.t -> unit
   val unset: string -> charstream -> 'ignored -> unit
   val unsetall: 'string -> 'charstream ->  Out.t -> unit
-  val ifdef: string -> charstream ->  Out.t -> unit
-  val ifndef: string -> charstream ->  Out.t -> unit
-  val elzeifdef: string -> charstream ->  Out.t -> unit
-  val elze: string -> charstream ->  Out.t -> unit
+  val ifdef: bool option ref -> string -> charstream ->  Out.t -> unit
+  val ifndef: bool option ref -> string -> charstream ->  Out.t -> unit
+  val elzeifdef: bool option ref -> string -> charstream ->  Out.t -> unit
+  val elze: bool option ref -> string -> charstream ->  Out.t -> unit
 end = struct
   include Mpp_conditions
   include Map.Make(String)
@@ -85,51 +85,45 @@ end = struct
         Pervasives.exit 1
 
 
-  let ifdef s cs out =
+  let ifdef last_cond s cs out =
     if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
     let css = charstream_of_string s in
     let s = read_until_one_of !space_chars css in
-      last_cond_exists := true;
       try
         begin
           ignore(find s !env);
-          last_cond := true;
+          last_cond := Some true;
           Out.output_charstream out css;
           Out.output_char out '\n';
           Out.output_charstream out cs
         end
       with Not_found -> 
-        last_cond := false
+        last_cond := Some false
 
-  let ifndef s cs out =
+  let ifndef last_cond s cs out =
     if !debug then Printf.eprintf "ifndef <%s> <%s>\n%!" s (String.escaped (string_of_charstream cs));
     let css = charstream_of_string s in
     let s = read_until_one_of !space_chars css in
-      last_cond_exists := true;
       try
         begin
           ignore(find s !env);
-          last_cond := false
+          last_cond := Some false
         end
       with Not_found -> 
-        last_cond := true;
+        last_cond := Some true;
         Out.output_charstream out css;
         Out.output_charstream out cs
 
 
-  let elzeifdef s cs out =
-    if !last_cond_exists then
-      begin
-        if !last_cond then
-          ()
-        else
-          ifdef s cs out
-      end
-    else
-      begin
-        parse_error ~msg:"`elseifdef' without a matching previous `if'."
-          (cs.where());
-        Pervasives.exit 1
-      end
-
+  let elzeifdef last_cond s cs out =
+    match !last_cond with
+      | Some c ->
+          if c then
+            ()
+          else
+            ifdef last_cond s cs out
+      | None ->
+          parse_error ~msg:"`elseifdef' without a matching previous `if'."
+            (cs.where());
+          Pervasives.exit 1
 end
