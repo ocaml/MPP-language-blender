@@ -10,7 +10,7 @@ module Out = Mpp_out
 let elze last_cond s cs out =
   match !last_cond with
     | None ->
-        Mpp_charstream.parse_error ~msg:"`else' without a matching previous `if'."
+        Mpp_charstream.parse_error ~msg:"`else' without a previous matching conditional."
           (cs.Mpp_charstream.where());
         Pervasives.exit 1
     | Some c ->
@@ -24,5 +24,3 @@ let elze last_cond s cs out =
             Out.output_charstream out cs
           end
 
-
- 
