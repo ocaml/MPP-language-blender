@@ -39,6 +39,7 @@ it's already usable.
 
 
 * 14 June 2013: new builtins: copy and tcopy.
+* 14 June 2013: new command line options.
 * 13 June 2013: note: a first release should be out soon.
 * 13 June 2013: command line option names have been shortened.
 * 13 June 2013: the builtin frag has been removed. It's not a standalone program (to build it, you'll need ocamlfind and the libraries Core and Re -- best installed with OPAM).
