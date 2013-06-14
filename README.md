@@ -38,9 +38,10 @@ it's already usable.
 # Log
 
 
+* 14 June 2013: new builtins: copy and tcopy.
 * 13 June 2013: note: a first release should be out soon.
 * 13 June 2013: command line option names have been shortened.
-* 13 June 2013: fragment feature has been moved to a standalone binary.
+* 13 June 2013: the builtin frag has been removed. It's not a standalone program.
 * 13 June 2013: bug fixes.
 *  6 June 2013: new features are being pushed, so it's going to be fragile for few days. If something is broken, take a version of 4 June.
 *  6 June 2013: some bug fixes.
