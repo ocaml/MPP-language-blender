@@ -1,3 +1,14 @@
+all:
+	@echo \# To run all tests:
+	@echo make testall
+	@echo \# To run a specific test, e.g., the test f42:
+	@echo make f42.test
+	@echo \# To inspect a specific test, e.g., the test f42:
+	@echo make f42.inspect
+	@echo \# To clean the mess that the testing process has made:
+	@echo make clean
+
+
 testall:
 	@echo
 	@printf '\033[01;33m========== %s ==========\033[00m\n' 'Running all tests'
