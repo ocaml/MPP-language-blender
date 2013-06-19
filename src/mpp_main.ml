@@ -283,7 +283,7 @@ let _ =
               "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
               "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
-              "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces.";
+              "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces (i.e. spaces at end of block and end of command line).";
               "-b", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
               "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
