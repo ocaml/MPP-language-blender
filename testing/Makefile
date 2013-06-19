@@ -10,3 +10,6 @@ testall:
 
 clean:
 	rm -f *~ *.out *.expected *.mpp
+
+%.inspect:
+	@for i in $(basename $@)* ; do echo ============================== $$i ; cat $$i ; done
