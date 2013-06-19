@@ -91,7 +91,7 @@ end = struct
     let s = read_until_one_of !space_chars css in
       try
         begin
-          ignore(find s !env);
+          ignore(find s !env); (*raises Not_found if not found*)
           last_cond := Some true;
           Out.output_charstream out css;
           Out.output_char out '\n';
