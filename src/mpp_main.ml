@@ -121,15 +121,6 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     let blockcharstream =
       (* the contents of the block is converted into a charstream *)
       charstream_of_string ~location:(block_start_location) block_contents
-        (*       let l_bc = charstream_of_string ~location:(block_start_location) block_contents in *)
-        (*         if nesting then *)
-        (*           begin *)
-        (*             let buff = Buffer.create 42 in *)
-        (*               preprocess l_bc (Out.Buffer buff); *)
-        (*               charstream_of_string ~location:(block_start_location) (Buffer.contents buff) *)
-        (*           end *)
-        (*         else *)
-        (*           l_bc *)
     in
     let action_name : string = (* name of the action *)
       eat space_chars blockcharstream;
