@@ -142,7 +142,12 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       match blockcharstream.take() with
         | Some c ->
             blockcharstream.push c;
-            charstream_of_string (read_until_one_of ~failsafe:true newline_chars blockcharstream)
+            let tmp = read_until_one_of ~failsafe:true ~push_back:true newline_chars blockcharstream in
+              charstream_of_string 
+                (if !ignore_trailing_spaces then
+                  delete_trailing_spaces tmp
+                  else
+                    tmp)
         | None ->
             charstream_of_string ""
     in
@@ -278,7 +283,7 @@ let _ =
               "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
               "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
-              "-its", Arg.Set(ignore_orphan_closing_tokens), " Ignore trailing spaces.";
+              "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces.";
               "-b", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
               "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
