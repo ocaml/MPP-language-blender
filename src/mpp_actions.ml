@@ -101,6 +101,7 @@ let builtins :  action_set ref =
   let unsetall _ = Variable.unsetall in
   let get _ = Variable.get in
   let tryget _ = Variable.tryget in
+  let ifcmd = Variable.ifcmd in
   let ifdef = Variable.ifdef in
   let ifndef = Variable.ifndef in
   let elzeifdef = Variable.elzeifdef in
@@ -118,6 +119,7 @@ let builtins :  action_set ref =
       Mpp_stringmap.empty
       [
         "ignore", (fun _ _ _ _ -> ()), "A command that does nothing with its arguments.";
+        "ifcmd", ifcmd, "If the last external command returned 0, then inputs the rest.";
         "ifdef", ifdef, "If the argument is a defined variable, then inputs the rest.";
         "tryget", tryget, "Get the value of a variable, and if it doesn't exist, it does nothing.";
         "error", error, "Stops MPP.";
