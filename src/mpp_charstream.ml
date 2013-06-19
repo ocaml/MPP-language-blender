@@ -470,3 +470,21 @@ let append cs1 cs2 =
       insert = (fun c -> if !current_is_cs1 then cs1.insert c else cs2.insert c);
       where  = (fun () -> if !current_is_cs1 then cs1.where() else cs2.where())
     }
+
+let delete_trailing_spaces s =
+  if s = "" then
+    s
+  else
+    let l = ref (String.length s) in
+      while 
+        (match s.[!l - 1] with
+          | '\n' | '\t' | ' ' | '\r' -> true
+          | _ -> false)
+      do
+        decr l
+      done;
+      if !l = String.length s then
+        s
+      else
+        String.sub s 0 !l
+          
