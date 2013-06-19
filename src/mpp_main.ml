@@ -12,7 +12,6 @@ let debug =
   try ignore(Sys.getenv "DEBUG") ; true with _ -> false
 
 let () = Mpp_charstream.debug := debug
-let () = Mpp_variables.debug := debug
 let () = Mpp_actions.debug := debug
 
 let ignore_orphan_closing_tokens = ref false
@@ -121,15 +120,16 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
       (* the contents of the block is converted into a charstream *)
-      let l_bc = charstream_of_string ~location:(block_start_location) block_contents in
-        if nesting then
-          begin
-            let buff = Buffer.create 42 in
-              preprocess l_bc (Out.Buffer buff);
-              charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
-          end
-        else
-          l_bc
+      charstream_of_string ~location:(block_start_location) block_contents
+        (*       let l_bc = charstream_of_string ~location:(block_start_location) block_contents in *)
+        (*         if nesting then *)
+        (*           begin *)
+        (*             let buff = Buffer.create 42 in *)
+        (*               preprocess l_bc (Out.Buffer buff); *)
+        (*               charstream_of_string ~location:(block_start_location) (Buffer.contents buff) *)
+        (*           end *)
+        (*         else *)
+        (*           l_bc *)
     in
     let action_name : string = (* name of the action *)
       eat space_chars blockcharstream;
@@ -140,15 +140,15 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         ~expect:"Zero or more spaces, and then an action name."
         blockcharstream
     in
-    let action_arguments : string = (* action arguments *)
+    let action_arguments : charstream = (* action arguments *)
       match blockcharstream.take() with
         | Some c ->
             blockcharstream.push c;
-            read_until_one_of ~failsafe:true newline_chars blockcharstream
+            charstream_of_string (read_until_one_of ~failsafe:true newline_chars blockcharstream)
         | None ->
-            ""
+            charstream_of_string ""
     in
-      Mpp_actions.exec last_cond action_name action_arguments blockcharstream out
+      Mpp_actions.exec nesting last_cond action_name action_arguments blockcharstream out
 
   (* Closing a block that hasn't been opened is wrong. *)
   and close_token_action() =
@@ -193,9 +193,9 @@ let init() =
     (* This is here because the input builtin needs to access the
        preprocess function.  *)
     let builtin__input =
-      (fun __last_cond arg cs out ->
-         let x = open_in arg in
-           cs.insert (charstream_of_inchannel arg x);
+      (fun __last_cond _nesting arg cs out ->
+         let x = open_in (string_of_charstream arg) in
+           cs.insert (charstream_of_inchannel (string_of_charstream arg) x);
            preprocess cs out;
            close_in x
       )
@@ -206,13 +206,13 @@ let init() =
     List.iter
       (fun (name, action, documentation) -> Mpp_actions.register name action documentation)
       [
-        "so", (fun _lc x _cs _out -> open_token := x), "Sets the opening token. Related: sc.";
-        "sc", (fun _lc x _cs _out -> close_token := x), "Sets the closing token. Related: so.";
-        "sso", (fun _lc x _cs _out -> open_special_token := x), "Sets the special opening token. Related: ssc.";
-        "ssc", (fun _lc x _cs _out -> close_special_token := x), "Sets the special closing token. Related: sso.";
-        "sec", (fun _lc x _cs _out -> endline_comments_token := x), "Sets the endline comments token.";
-        "soc", (fun _lc x _cs _out -> open_comments_token := x), "Sets the opening comments token. Related: scc.";
-        "scc", (fun _lc x _cs _out -> close_comments_token := x), "Sets the endline comments token. Related: soc.";
+        "so", (fun _lc _n x _cs _out -> open_token := string_of_charstream x), "Sets the opening token. Related: sc.";
+        "sc", (fun _lc _n x _cs _out -> close_token := string_of_charstream x), "Sets the closing token. Related: so.";
+        "sso", (fun _lc _n x _cs _out -> open_special_token := string_of_charstream x), "Sets the special opening token. Related: ssc.";
+        "ssc", (fun _lc _n x _cs _out -> close_special_token := string_of_charstream x), "Sets the special closing token. Related: sso.";
+        "sec", (fun _lc _n x _cs _out -> endline_comments_token := string_of_charstream x), "Sets the endline comments token.";
+        "soc", (fun _lc _n x _cs _out -> open_comments_token := string_of_charstream x), "Sets the opening comments token. Related: scc.";
+        "scc", (fun _lc _n x _cs _out -> close_comments_token := string_of_charstream x), "Sets the endline comments token. Related: soc.";
       ]
   end
 
@@ -293,7 +293,7 @@ let _ =
               "-set", Arg.String(fun s ->
                                    let cs = charstream_of_string s in 
                                    let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
-                                     Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
+                                     Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
               "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
@@ -323,10 +323,4 @@ List of options:")
       if debug then Printf.eprintf "%s\n%!" bt;
       if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
       Pervasives.exit 1
-
-
-
-
-
-
 
