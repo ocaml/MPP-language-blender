@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+mpp -so XX -sc YY > f1.out  <<EOF
+XX echo 42YY
+EOF
+
+echo 42 > f1.expected
+diff f1.out f1.expected
+
