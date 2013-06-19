@@ -53,7 +53,9 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       else
         default last_cond (charstream.take())
     end;
-    loop last_cond
+    match charstream.take() with
+      | None -> ()
+      | Some c -> charstream.push c;  loop last_cond
 
   and flush_default() =
     Out.output_buffer out default_buffer;
@@ -123,7 +125,9 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         if nesting then
           begin
             let buff = Buffer.create 42 in
+              Printf.eprintf "plop\n%!";
               preprocess l_bc (Out.Buffer buff);
+              Printf.eprintf "plop\n%!";
               charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
           end
         else
