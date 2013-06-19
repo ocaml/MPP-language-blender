@@ -118,16 +118,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
-      (* the contents of the block is converted into a charstream *)
-      let l_bc = charstream_of_string ~location:(block_start_location) block_contents in
-        if nesting then
-          begin
-            let buff = Buffer.create 42 in
-              preprocess l_bc (Out.Buffer buff);
-              charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
-          end
-        else
-          l_bc
+      charstream_of_string ~location:(block_start_location) block_contents 
     in
     let action_name : string = (* name of the action *)
       eat space_chars blockcharstream;
@@ -137,6 +128,17 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         (* ~exclude:newline_chars *)
         ~expect:"Zero or more spaces, and then an action name."
         blockcharstream
+    in
+    let blockcharstream = (* masking! *)
+      (* the contents of the block is converted into a charstream *)
+        if nesting then
+          begin (* TODO: fix semantics... *)
+            let buff = Buffer.create 42 in
+              preprocess blockcharstream (Out.Buffer buff);
+              charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
+          end
+        else
+          blockcharstream
     in
     let action_arguments : string = (* action arguments *)
       match blockcharstream.take() with
