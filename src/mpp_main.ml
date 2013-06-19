@@ -125,9 +125,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         if nesting then
           begin
             let buff = Buffer.create 42 in
-              Printf.eprintf "plop\n%!";
               preprocess l_bc (Out.Buffer buff);
-              Printf.eprintf "plop\n%!";
               charstream_of_string ~location:(block_start_location) (Buffer.contents buff)
           end
         else
@@ -295,7 +293,6 @@ let _ =
               "-set", Arg.String(fun s ->
                                    let cs = charstream_of_string s in 
                                    let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
-                                   let _ = cs.take() in
                                      Mpp_variables.Variable.set (vn ^ " " ^ string_of_charstream cs) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
