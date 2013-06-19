@@ -380,7 +380,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
       if nesting then
         begin
           if is_lazy action_name then
-            begin (* nesting and lazy: TODO *)
+            begin (* nesting and lazy: it's delegated! *)
               apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
           else
@@ -401,7 +401,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
             end
         end
       else
-        begin
+        begin (* no nesting *)
           apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
         end
     end
