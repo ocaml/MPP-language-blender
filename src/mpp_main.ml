@@ -16,6 +16,7 @@ let () = Mpp_actions.debug := debug
 
 let ignore_orphan_closing_tokens = ref false
 let save_newlines = ref false
+let ignore_trailing_spaces = ref false
 
 module Out = Mpp_out
 
@@ -92,7 +93,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
             None
         | Some c ->
             charstream.push c;
-            let () = 
+            let () =
               if debug then Printf.eprintf "peek<%s>\n%!"
                 (String.escaped (charstream_peek ~n:20 charstream))
             in
@@ -103,10 +104,10 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     let block_contents =
       (* the contents of the block *)
       match block_name with
-        | Some name -> 
+        | Some name ->
             if debug then Printf.eprintf "name=<%s>%!" name;
             read_until_word charstream (name ^ (if nesting then !close_nesting_token else !close_token))
-        | None -> 
+        | None ->
             read_until_word charstream (if nesting then !close_nesting_token else !close_token)
     in
     let () = 
@@ -116,6 +117,12 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
           | Some c -> charstream.push c
           | None -> ()
         end
+    in
+    let block_contents =
+      if !ignore_trailing_spaces then
+        delete_trailing_spaces block_contents
+      else
+        block_contents
     in
     let charstream = () in let _ = charstream in (* ~> to prevent its use afterwards *)
     let blockcharstream =
@@ -271,6 +278,7 @@ let _ =
               "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
               "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
+              "-its", Arg.Set(ignore_orphan_closing_tokens), " Ignore trailing spaces.";
               "-b", Arg.Unit(Mpp_actions.list_builtins), " List builtins.";
               "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
               "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
