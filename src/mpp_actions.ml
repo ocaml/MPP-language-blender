@@ -35,8 +35,9 @@ let cat (out:Out.t) filename =
       "builtin cat error: file <%s> doesn't exist.\n%!"
       filename
 
+let last_cmd = ref 0
+
 let command arg charstream (out:Out.t) =
-  let file, line, column = charstream.where() in
   let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
   let otmp = open_out tmp in
   let tmp2 = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp2" "plop" in
@@ -46,15 +47,32 @@ let command arg charstream (out:Out.t) =
     let () = cat out tmp2 in
       Sys.remove tmp;
       Sys.remove tmp2;
-      match ec with
-        | 0 -> ()
-        | _ ->
-            if not (!ignore_exec_error) then
-              Pervasives.failwith 
-                (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
-                   arg ec file line column)
-            else
-              ()
+      last_cmd := ec;
+      ec
+
+let ifcmd last_cond arg charstream out =
+  if !debug then Printf.eprintf "ifcmd <%s> <%s>\n%!" (String.escaped arg) (String.escaped (string_of_charstream charstream));
+  if !last_cmd = 0 then
+    begin
+      last_cond := Some true;
+      Out.output_string out arg;
+      Out.output_charstream out charstream;
+    end
+  else
+    last_cond := Some false
+
+
+let cmd arg charstream (out:Out.t) =
+  let file, line, column = charstream.where() in
+    match command arg charstream out with
+      | 0 -> ()
+      | ec ->
+          if not (!ignore_exec_error) then
+            Pervasives.failwith 
+              (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
+                 arg ec file line column)
+          else
+            ()
 
 let copy ~trunc __last_cond filename cs (out:Out.t) =
   let s = Mpp_charstream.string_of_charstream cs in
@@ -72,7 +90,7 @@ let copy ~trunc __last_cond filename cs (out:Out.t) =
   
 
 let builtins :  action_set ref =
-  let cmd _ = command in
+  let cmd _ = cmd in
   let echo _ =
     (fun a _cs out -> Out.output_string out a) in
   let cat _ =
