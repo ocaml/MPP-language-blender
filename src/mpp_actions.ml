@@ -63,7 +63,7 @@ module Mpp_conditions = struct
                   let b1 = Buffer.create 42 in
                     !main_process s (Out.Buffer b1);
                     Out.output_buffer out b1;
-                    Out.output_char out '\n';
+                    (* Out.output_char out '\n'; *)
                     let b2 = Buffer.create 42 in
                       !main_process cs (Out.Buffer b2);
                       Out.output_buffer out b2;
@@ -71,7 +71,7 @@ module Mpp_conditions = struct
               else
                 begin
                   Out.output_charstream out s;
-                  Out.output_char out '\n';
+                  (* Out.output_char out '\n'; *)
                   Out.output_charstream out cs;
                 end
             end
@@ -113,7 +113,7 @@ end = struct
       match string_of_charstream cs with
         | "" -> string_of_charstream s
         | x -> 
-            string_of_charstream s ^ "\n" ^ x
+            string_of_charstream s ^ (* "\n" ^ *) x
     in
       env := add variable value !env
 
@@ -157,7 +157,7 @@ end = struct
               let b1 = Buffer.create 42 in
                 !main_process cs (Out.Buffer b1);
                 Out.output_buffer out b1;
-                Out.output_char out '\n';
+                (* Out.output_char out '\n'; *)
                 let b2 = Buffer.create 42 in
                   !main_process bcs (Out.Buffer b2);
                   Out.output_buffer out b2;
@@ -165,7 +165,7 @@ end = struct
           else
             begin
               Out.output_charstream out cs;
-              Out.output_char out '\n';
+              (* Out.output_char out '\n'; *)
               Out.output_charstream out bcs;
             end
         end
@@ -187,7 +187,7 @@ end = struct
             let b1 = Buffer.create 42 in
               !main_process cs (Out.Buffer b1);
               Out.output_buffer out b1;
-              Out.output_char out '\n';
+              (* Out.output_char out '\n'; *)
               let b2 = Buffer.create 42 in
                 !main_process bcs (Out.Buffer b2);
                 Out.output_buffer out b2;
@@ -195,7 +195,7 @@ end = struct
         else
           begin
             Out.output_charstream out cs;
-            Out.output_char out '\n';
+            (* Out.output_char out '\n'; *)
             Out.output_charstream out bcs;
           end
 
@@ -253,7 +253,7 @@ let ifcmd last_cond nesting arg charstream out =
           let b1 = Buffer.create 42 in
             !main_process arg (Out.Buffer b1);
             Out.output_buffer out b1;
-            Out.output_char out '\n';
+            (* Out.output_char out '\n'; *)
           let b2 = Buffer.create 42 in
             !main_process charstream (Out.Buffer b2);
             Out.output_buffer out b2;
@@ -261,7 +261,7 @@ let ifcmd last_cond nesting arg charstream out =
       else
         begin
           Out.output_charstream out arg;
-          Out.output_char out '\n';
+          (* Out.output_char out '\n'; *)
           Out.output_charstream out charstream;
         end
     end
@@ -369,7 +369,7 @@ let apply_builtin action_name location =
 let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (arguments:charstream) (charstream:charstream) (out: Out.t) =
   if !debug then
     begin
-      Printf.eprintf "exec: %!";
+      Printf.eprintf "Exec: %!";
       (* action_name : thing to do; arguments : arguments on the first
          line; charstream : what follows the first line (if any). *)
       Printf.eprintf "action_name:<%s> arguments:<%s>\n%!"
@@ -400,6 +400,10 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
                 apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
         end
+      else
+        begin
+          apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
+        end
     end
   else
     begin
@@ -414,7 +418,8 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
           (charstream_of_string (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ string_of_charstream arguments))
           charstream out;
       if !debug then Printf.eprintf "???%!";
-    end
+    end;
+  Out.flush out
 
 let list_builtins () =
   let m =
