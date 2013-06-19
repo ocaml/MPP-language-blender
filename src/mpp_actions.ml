@@ -48,10 +48,13 @@ let command arg charstream (out:Out.t) =
       Sys.remove tmp;
       Sys.remove tmp2;
       last_cmd := ec;
+      Out.flush out;
       ec
 
 let ifcmd last_cond arg charstream out =
-  if !debug then Printf.eprintf "ifcmd <%s> <%s>\n%!" (String.escaped arg) (String.escaped (string_of_charstream charstream));
+  if !debug then 
+    Printf.eprintf "ifcmd <%s> <%s>\n%!"
+      (String.escaped arg) (String.escaped (string_of_charstream charstream));
   if !last_cmd = 0 then
     begin
       last_cond := Some true;
@@ -101,7 +104,7 @@ let builtins :  action_set ref =
   let unsetall _ = Variable.unsetall in
   let get _ = Variable.get in
   let tryget _ = Variable.tryget in
-  let ifcmd = Variable.ifcmd in
+  let ifcmd = ifcmd in
   let ifdef = Variable.ifdef in
   let ifndef = Variable.ifndef in
   let elzeifdef = Variable.elzeifdef in
