@@ -37,7 +37,9 @@ it's already usable.
 
 # Log
 
-
+* 19 June 2013: lazy (correct) semantics for conditionals have just been implemented, but it hasn't been tested yet.
+* 19 June 2013: new directory (snapshots) that should include some versions that should build and work correctly, as I use github to synchronize between my different machines more than to distribute the MPP software.
+* 19 June 2013: blocks that can be nested should work now.
 * 14 June 2013: new builtins: copy and tcopy.
 * 14 June 2013: new command line options.
 * 13 June 2013: note: a first release should be out soon.

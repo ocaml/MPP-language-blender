@@ -18,6 +18,7 @@ and filename = string
 and location = filename*line*column
 and line = int
 and column = int
+type t = charstream
 
 
 let parse_error : ?start:location -> ?msg:string -> location -> unit = 

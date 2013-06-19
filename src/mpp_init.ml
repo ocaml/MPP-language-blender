@@ -90,4 +90,4 @@ let list_specials () =
   Pervasives.exit 0
 
 (* PROPAGATION *)  
-let () = Mpp_variables.space_chars := space_chars
+let () = Mpp_actions.space_chars := space_chars
