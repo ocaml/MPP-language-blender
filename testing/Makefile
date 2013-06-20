@@ -26,4 +26,7 @@ clean:
 	@for i in $(basename $@)*[a-z] ; do echo ============================== $$i ; cat $$i ; done
 
 
+registernewtests:
+	git add *.run
+
 
