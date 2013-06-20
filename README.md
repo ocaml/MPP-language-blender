@@ -37,6 +37,9 @@ it's already usable.
 
 # Log
 
+* 20 June 2013: new tests.
+* 20 June 2013: minor new library features.
+* 20 June 2013: bug fix: ifdef/ifndef.
 * 19 June 2013: "lazy" semantics for conditionals have just been implemented, but it hasn't been tested yet. That wasn't needed until the nesting blocks were implemented.
 * 19 June 2013: new directory (snapshots) that should include some versions that should build and work correctly, as I use github to synchronize between my different machines more than to distribute the MPP software.
 * 19 June 2013: blocks that can be nested should work now.
