@@ -32,7 +32,6 @@ let newline_chars = Mpp_charset.of_list ['\n'; '\r']
    but this way of using it has not been tested yet. *)
 let space_chars = Mpp_charset.of_list [' '; '\t']
 
-
 (* [blank_chars] might not be used at all *)
 let blank_chars = Mpp_charset.of_list ['\n'; '\r';' '; '\t']
 
@@ -91,3 +90,4 @@ let list_specials () =
 
 (* PROPAGATION *)  
 let () = Mpp_actions.space_chars := space_chars
+let () = Mpp_actions.blank_chars := blank_chars

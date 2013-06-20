@@ -7,7 +7,8 @@
 open Mpp_charstream
 module Out = Mpp_out
 
-let space_chars = ref (Mpp_charset.of_list [' '; '\t'])
+let space_chars = ref (Mpp_charset.empty)
+let blank_chars = ref (Mpp_charset.empty)
 let debug = ref false
 
 let ignore_non_existing_commands = ref false
@@ -107,7 +108,7 @@ end = struct
 
   let set s cs _ =
     let variable =
-      read_until_one_of !space_chars s
+      read_until_one_of !blank_chars s
     in
     let value = 
       match string_of_charstream cs with
@@ -147,7 +148,8 @@ end = struct
 
   let ifdef last_cond nesting (cs:charstream) bcs out =
     if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
-    let s:string = read_until_one_of !space_chars cs in
+    let s:string = read_until_one_of ~failsafe:true ~caller:"ifdef" !blank_chars cs in
+      assert (s<>"");
       try
         begin
           ignore(find s !env); (*raises Not_found if not found*)
@@ -174,7 +176,8 @@ end = struct
 
   let ifndef last_cond nesting (cs:charstream) bcs out =
     if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
-    let s:string = read_until_one_of !space_chars cs in
+    let s:string = read_until_one_of ~failsafe:true ~caller:"ifndef" !blank_chars cs in
+      assert(s<>"");
       try
         begin
           ignore(find s !env); (*raises Not_found if not found*)
@@ -376,7 +379,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
         action_name (string_of_charstream ~keepcs:true arguments);
     end;
   if action_name.[0] <> '-' then
-    begin
+    begin (* builtins *)
       if nesting then
         begin
           if is_lazy action_name then
@@ -397,6 +400,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
                   !main_process charstream (Out.Buffer buff2);
                   charstream_of_string ~location:x (Buffer.contents buff2)
               in
+                if !debug then Printf.eprintf "W???<%s><%s>\n%!" (String.escaped (string_of_charstream ~keepcs:true arguments)) (String.escaped (string_of_charstream ~keepcs:true charstream));
                 apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
         end
@@ -417,7 +421,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
         (apply_builtin "cmd" (charstream.where())) last_cond nesting
           (charstream_of_string (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ string_of_charstream arguments))
           charstream out;
-      if !debug then Printf.eprintf "???%!";
+      if !debug then Printf.eprintf "cmd... mpp_actions.ml:>???%!";
     end;
   Out.flush out
 

@@ -245,7 +245,7 @@ let rec eat (cs:Mpp_charset.t) charstream =
           charstream.push c            
 
 
-let read_until ?(failsafe=false) c charstream : string =
+let read_until ?(caller="") ?(failsafe=false) c charstream : string =
   if !debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =
@@ -271,12 +271,14 @@ let read_until ?(failsafe=false) c charstream : string =
             Buffer.contents b
           else
             begin
-              parse_error ~msg:"Cound read until far enough" (charstream.where());
+              parse_error
+                ~msg:(Printf.sprintf "Couldn't read far enough. I could read <%s>." (Buffer.contents b))
+                (charstream.where());
               exit 1
             end
   in loop ()
 
-let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
+let read_until_one_of ?(caller="") ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
   if !debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
   let b = Buffer.create 128 in
   let rec loop () =
@@ -307,7 +309,9 @@ let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(
             Buffer.contents b
           else
             begin
-              parse_error ~msg:"Cound read until far enough" (charstream.where());
+              parse_error
+                ~msg:(Printf.sprintf "Couldn't read far enough. I could read <%s>. I was looking for [%s].%s" (Buffer.contents b) (Mpp_charset.to_escaped_string cs) (if caller <> "" then Printf.sprintf " Caller: %s." caller else ""))
+                (charstream.where());
               exit 1
             end
   in loop ()
