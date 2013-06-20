@@ -14,4 +14,3 @@ EOF
 mpp -set x=plop -w -o $0.out $0.mpp $0.mpp
 
 diff $0.out $0.expected
-
