@@ -230,7 +230,8 @@ let _ =
   let l = Array.length Sys.argv in
   let overwrite = ref false in
   let continue = ref false in
-  let defaultoutput = ref "" in
+  let common_output = ref None in
+  let common_output_filename = ref "" in
   let at_least_one_file_processed = ref false in
   let process_one_file filename =
     if not(Sys.file_exists filename) then
@@ -241,32 +242,45 @@ let _ =
           (Printf.eprintf "Error: file <%s> does not exist, I will stop.\n%!" filename;
            exit 4)
       end
-    else
+    else (* filename does exist *)
       if (try Filename.chop_extension filename ^ ".mpp" = filename with Invalid_argument _ -> false)
-        || !defaultoutput <> ""
+        || !common_output_filename <> ""
       then
-        begin
+        (begin
           let outputfilename =
-            if !defaultoutput = "" then
+            if !common_output_filename = "" then
               Filename.chop_extension filename 
             else
-              !defaultoutput
+              !common_output_filename
           in
             if outputfilename <> "/dev/stdout" && Sys.file_exists outputfilename && not !overwrite then
               begin
-                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -overwrite.\n%!"
-                  outputfilename
+                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -w.\n%!"
+                  outputfilename (* => do nothing *)
               end
             else
-              begin
-                let out = Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename) in
-                  preprocess (charstream_of_inchannel filename (open_in filename)) out;
-                  at_least_one_file_processed := true
+              begin match !common_output_filename with
+                | "" ->
+                    let out =
+                      Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename)
+                    in
+                      preprocess (charstream_of_inchannel filename (open_in filename)) out;
+                      at_least_one_file_processed := true
+                | outputfilename ->
+                    match !common_output with
+                      | None ->
+                          let out = Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename) in
+                            common_output := Some out;
+                            preprocess (charstream_of_inchannel filename (open_in filename)) out;
+                            at_least_one_file_processed := true
+                      | Some out ->
+                          preprocess (charstream_of_inchannel filename (open_in filename)) out;
+                          at_least_one_file_processed := true
               end
-        end
+        end)
     else
       begin
-        Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I output on stdout.\n%!" filename;
+        if filename <> "/dev/stdin" then Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I output on stdout.\n%!" filename;
         preprocess (charstream_of_inchannel filename (open_in filename)) (Out.Out_channel stdout);
         at_least_one_file_processed := true
       end
@@ -276,7 +290,7 @@ let _ =
         begin
           let aligned =
             Arg.align [
-              "-o", Arg.Set_string(defaultoutput), "f Output to the file f instead of standard option.";
+              "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
               (*               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files."; *)
               "-w", Arg.Set(overwrite), " Overwrite existing destination files.";
               (*               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist."; *)
@@ -312,8 +326,8 @@ let _ =
               ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
                   ~ If a file name doesn't have the .mpp extension, it will output on stdout.
                     ~ If you don't give any file name, it will use standard input (/dev/stdin).
-~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
-~ This software does not care about characters encoding, hence it performs no conversion at all.
+                      ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
+                        ~ This software does not care about characters encoding, hence it performs no conversion at all.
 ~ When an options exists to enable a feature, it means that it is disabled by default.
 ~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
