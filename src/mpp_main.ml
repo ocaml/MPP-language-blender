@@ -192,15 +192,17 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
 
 
 let init() =
+  Mpp_actions.main_process := preprocess;
   begin
     (* This is here because the input builtin needs to access the
        preprocess function.  *)
     let builtin__input =
       (fun __last_cond _nesting arg cs out ->
-         let x = open_in (string_of_charstream arg) in
-           cs.insert (charstream_of_inchannel (string_of_charstream arg) x);
-           preprocess cs out;
-           close_in x
+        let arg = string_of_charstream arg in
+        let x = open_in arg in
+          cs.insert (charstream_of_inchannel arg x);
+          preprocess cs out;
+          close_in x
       )
     in
       Mpp_actions.register "input" builtin__input "Input and process a file.";
@@ -236,13 +238,12 @@ let _ =
         if !continue then
           ()
         else
-          Printf.eprintf "Error: file <%s> does not exist, I will stop. You might want to use -continue.\n%!"
-            filename
+          (Printf.eprintf "Error: file <%s> does not exist, I will stop.\n%!" filename;
+           exit 4)
       end
     else
-      if
-        try Filename.chop_extension filename ^ ".mpp" = filename
-        with Invalid_argument _ -> false
+      if (try Filename.chop_extension filename ^ ".mpp" = filename with Invalid_argument _ -> false)
+        || !defaultoutput <> ""
       then
         begin
           let outputfilename =
@@ -263,22 +264,22 @@ let _ =
                   at_least_one_file_processed := true
               end
         end
-      else
-        begin
-          Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I'll output on stdout.\n%!" filename;
-          preprocess (charstream_of_inchannel filename (open_in filename)) (Out.Out_channel stdout);
-          at_least_one_file_processed := true
-        end
+    else
+      begin
+        Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I output on stdout.\n%!" filename;
+        preprocess (charstream_of_inchannel filename (open_in filename)) (Out.Out_channel stdout);
+        at_least_one_file_processed := true
+      end
   in
     try
       if l > 1 then
         begin
           let aligned =
             Arg.align [
-              "-o", Arg.Set_string(defaultoutput), "filename Output to filename instead of standard option.";
-(*               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files."; *)
+              "-o", Arg.Set_string(defaultoutput), "f Output to the file f instead of standard option.";
+              (*               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files."; *)
               "-w", Arg.Set(overwrite), " Overwrite existing destination files.";
-(*               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist."; *)
+              (*               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist."; *)
               "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
               "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
               "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
@@ -295,9 +296,9 @@ let _ =
               "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
               "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
               "-set", Arg.String(fun s ->
-                                   let cs = charstream_of_string s in 
-                                   let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
-                                     Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
+                let cs = charstream_of_string s in 
+                let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
+                  Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
               "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
@@ -309,8 +310,8 @@ let _ =
               aligned
               process_one_file
               ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
-~ If a file name doesn't have the .mpp extension, it will output on stdout.
-~ If you don't give any file name, it will use standard input (/dev/stdin).
+                  ~ If a file name doesn't have the .mpp extension, it will output on stdout.
+                    ~ If you don't give any file name, it will use standard input (/dev/stdin).
 ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
 ~ This software does not care about characters encoding, hence it performs no conversion at all.
 ~ When an options exists to enable a feature, it means that it is disabled by default.
@@ -320,11 +321,12 @@ List of options:")
         end;
       if not !at_least_one_file_processed then
         begin
-          preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout)
+          (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
+          process_one_file "/dev/stdin"
         end;
     with e ->
       let bt = Printexc.get_backtrace () in
-      if debug then Printf.eprintf "%s\n%!" bt;
-      if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
-      Pervasives.exit 1
+        if debug then Printf.eprintf "%s\n%!" bt;
+        if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
+        Pervasives.exit 1
 
