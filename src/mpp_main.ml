@@ -58,9 +58,10 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       | Some c -> charstream.push c;  loop last_cond
 
   and flush_default() =
-    Out.output_buffer out default_buffer;
-    Buffer.clear default_buffer;
-    Out.flush out
+    let r = !Mpp_init.special.print (Buffer.contents default_buffer) in
+      Out.output_string out r;
+      Buffer.clear default_buffer;
+      Out.flush out
 
   (* default action *)
   and default last_cond = function
@@ -314,7 +315,7 @@ let _ =
                 let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
                   Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-              "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file.";
+              "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
               "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
               "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
