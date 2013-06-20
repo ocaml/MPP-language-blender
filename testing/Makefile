@@ -17,7 +17,7 @@ testall:
 
 %.test:%.run
 	@echo Testing $<
-	@PATH="../src:$${PATH}" bash $< && printf '\033[01;32m%s\033[00m\n' "=> Result: successful" || printf '\033[01;31m%s\033[00m\n' "=> Result: unsuccessful"
+	@PATH="../src:$${PATH}" bash $< && printf '\033[01;32m%s\033[00m\n' "=> Result: successful" || printf '\033[01;31m%s\033[00m\n\033[01;31m%s\033[00m\n' "=> Result: unsuccessful" "You might want to run make $(basename $<).inspect"
 
 clean:
 	rm -f *~ *.out *.expected *.mpp
