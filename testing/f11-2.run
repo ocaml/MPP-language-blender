@@ -1,0 +1,28 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+XX- tryget x -YY
+{{ux ifdef x XX{{+<||{{ get {{++<||{{YY
+
+ux}}
+{{KLM get * 
+KLM}}
+
+XX(( echo PLOP X  
+
+((YY
+
+EOF
+
+cat > $0.expected <<EOF
+koala
+PLOP X
+koala
+PLOP X
+koala
+PLOP X
+EOF
+
+mpp -so XX -sc YY -snl -its -set +=plop -set *=koala -w -o $0.out $0.mpp $0.mpp $0.mpp
+
+diff $0.out $0.expected
