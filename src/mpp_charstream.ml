@@ -59,14 +59,6 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
             end
 
 
-let string_of_charstream c =
-  let b = Buffer.create 42 in
-  let rec loop () =
-    match c.take () with
-      | None -> Buffer.contents b
-      | Some c -> Buffer.add_char b c; loop()
-  in loop()
-
 let output_charstream out c =
   let rec loop () =
     match c.take () with
@@ -488,3 +480,20 @@ let delete_trailing_spaces s =
       else
         String.sub s 0 !l
           
+
+
+let string_of_charstream ?(keepcs=false) c =
+  let x = c.where() in
+  let b = Buffer.create 42 in
+  let rec loop () =
+    match c.take () with
+      | None -> Buffer.contents b
+      | Some c -> Buffer.add_char b c; loop()
+  in
+  let res = loop() in
+    match keepcs with
+      | true ->
+          c.insert (charstream_of_string ~location:x res);
+          res
+      | false ->
+          res

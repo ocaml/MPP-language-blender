@@ -123,7 +123,7 @@ end = struct
         Out.output_string out (find s !env)
       with Not_found ->
         parse_error
-          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist (1)." s) 
           (cs.where());
         Pervasives.exit 1
 
@@ -140,13 +140,13 @@ end = struct
         env := remove s !env
       with Not_found ->
         parse_error
-          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist (2)." s) 
           (cs.where());
         Pervasives.exit 1
 
 
   let ifdef last_cond nesting (cs:charstream) bcs out =
-    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream cs) (String.escaped (string_of_charstream bcs));
+    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
     let s:string = read_until_one_of !space_chars cs in
       try
         begin
@@ -173,7 +173,7 @@ end = struct
         last_cond := Some false
 
   let ifndef last_cond nesting (cs:charstream) bcs out =
-    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream cs) (String.escaped (string_of_charstream bcs));
+    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
     let s:string = read_until_one_of !space_chars cs in
       try
         begin
@@ -244,7 +244,7 @@ let command arg charstream (out:Out.t) =
 let ifcmd last_cond nesting arg charstream out =
   if !debug then 
     Printf.eprintf "ifcmd <%s> <%s>\n%!"
-      (String.escaped (string_of_charstream arg)) (String.escaped (string_of_charstream charstream));
+      (String.escaped (string_of_charstream ~keepcs:true arg)) (String.escaped (string_of_charstream ~keepcs:true charstream));
   if !last_cmd = 0 then
     begin
       last_cond := Some true;
@@ -277,7 +277,7 @@ let cmd arg charstream (out:Out.t) =
           if not (!ignore_exec_error) then
             Pervasives.failwith 
               (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
-                 (string_of_charstream arg) ec file line column)
+                 (string_of_charstream ~keepcs:true arg) ec file line column)
           else
             ()
 
@@ -316,7 +316,7 @@ let builtins : action_set ref =
   let elze = Variable.elze in
   let error _ _ s cs _ =
     parse_error 
-      ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." (string_of_charstream s))
+      ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." (string_of_charstream ~keepcs:true s))
       (cs.where());
     Pervasives.exit 1
   in
@@ -373,7 +373,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
       (* action_name : thing to do; arguments : arguments on the first
          line; charstream : what follows the first line (if any). *)
       Printf.eprintf "action_name:<%s> arguments:<%s>\n%!"
-        action_name (string_of_charstream arguments);
+        action_name (string_of_charstream ~keepcs:true arguments);
     end;
   if action_name.[0] <> '-' then
     begin
