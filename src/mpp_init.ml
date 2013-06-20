@@ -82,7 +82,7 @@ let set_special s =
   special := r
 
 let list_specials () = 
-  Printf.printf "List of special blocks:\n";
+  Printf.printf "List of special block languages available:\n";
   List.iter 
     (fun {name; _} -> Printf.printf "%s\n" name) 
     special_blocks;
