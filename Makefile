@@ -14,3 +14,15 @@ mpp:
 	cd src && make mpp
 frag:
 	cd src && make frag
+
+clean:
+	cd src && make clean
+	cd snapshots && make clean
+	cd testing && make clean
+
+snapshot:
+	cd snapshots && make
+
+tests:
+	cd testing && make testall
+
