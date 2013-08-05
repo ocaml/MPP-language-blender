@@ -312,7 +312,7 @@ let _ =
               "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
               "-set", Arg.String(fun s ->
                 let cs = charstream_of_string s in 
-                let vn = read_until_one_of (Mpp_charset.of_list ['='; ' ';'\t']) cs in
+                let vn = read_until_one_of ~failsafe:true (Mpp_charset.of_list ['='; ' ';'\t']) cs in
                   Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
               "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
