@@ -1,0 +1,19 @@
+#!/bin/bash
+cat > f2.mpp <<EOF
+(( echo 42))
+(( echo 42))
+(( echo 42))
+(( echo 42))
+(( echo 42))
+
+EOF
+
+cat > f2.snl.expected <<EOF
+4242424242
+EOF
+
+
+mpp -snl < f2.mpp > f2.snl.out
+
+diff f2.snl.out f2.snl.expected
+

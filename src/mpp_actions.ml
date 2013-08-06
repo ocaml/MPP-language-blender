@@ -7,7 +7,8 @@
 open Mpp_charstream
 module Out = Mpp_out
 
-let space_chars = ref (Mpp_charset.of_list [' '; '\t'])
+let space_chars = ref (Mpp_charset.empty)
+let blank_chars = ref (Mpp_charset.empty)
 let debug = ref false
 
 let ignore_non_existing_commands = ref false
@@ -63,7 +64,7 @@ module Mpp_conditions = struct
                   let b1 = Buffer.create 42 in
                     !main_process s (Out.Buffer b1);
                     Out.output_buffer out b1;
-                    Out.output_char out '\n';
+                    (* Out.output_char out '\n'; *)
                     let b2 = Buffer.create 42 in
                       !main_process cs (Out.Buffer b2);
                       Out.output_buffer out b2;
@@ -71,7 +72,7 @@ module Mpp_conditions = struct
               else
                 begin
                   Out.output_charstream out s;
-                  Out.output_char out '\n';
+                  (* Out.output_char out '\n'; *)
                   Out.output_charstream out cs;
                 end
             end
@@ -107,13 +108,13 @@ end = struct
 
   let set s cs _ =
     let variable =
-      read_until_one_of !space_chars s
+      read_until_one_of !blank_chars s
     in
     let value = 
       match string_of_charstream cs with
         | "" -> string_of_charstream s
         | x -> 
-            string_of_charstream s ^ "\n" ^ x
+            string_of_charstream s ^ (* "\n" ^ *) x
     in
       env := add variable value !env
 
@@ -123,7 +124,7 @@ end = struct
         Out.output_string out (find s !env)
       with Not_found ->
         parse_error
-          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist (1)." s) 
           (cs.where());
         Pervasives.exit 1
 
@@ -140,14 +141,15 @@ end = struct
         env := remove s !env
       with Not_found ->
         parse_error
-          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist." s) 
+          ~msg:(Printf.sprintf "You tried to get the value of variable %s, which doesn't exist (2)." s) 
           (cs.where());
         Pervasives.exit 1
 
 
   let ifdef last_cond nesting (cs:charstream) bcs out =
-    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream cs) (String.escaped (string_of_charstream bcs));
-    let s:string = read_until_one_of !space_chars cs in
+    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
+    let s:string = read_until_one_of ~failsafe:true ~caller:"ifdef" !blank_chars cs in
+      assert (s<>"");
       try
         begin
           ignore(find s !env); (*raises Not_found if not found*)
@@ -157,7 +159,7 @@ end = struct
               let b1 = Buffer.create 42 in
                 !main_process cs (Out.Buffer b1);
                 Out.output_buffer out b1;
-                Out.output_char out '\n';
+                (* Out.output_char out '\n'; *)
                 let b2 = Buffer.create 42 in
                   !main_process bcs (Out.Buffer b2);
                   Out.output_buffer out b2;
@@ -165,7 +167,7 @@ end = struct
           else
             begin
               Out.output_charstream out cs;
-              Out.output_char out '\n';
+              (* Out.output_char out '\n'; *)
               Out.output_charstream out bcs;
             end
         end
@@ -173,8 +175,9 @@ end = struct
         last_cond := Some false
 
   let ifndef last_cond nesting (cs:charstream) bcs out =
-    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream cs) (String.escaped (string_of_charstream bcs));
-    let s:string = read_until_one_of !space_chars cs in
+    if !debug then Printf.eprintf "ifdef <%s> <%s>\n%!" (string_of_charstream ~keepcs:true cs) (String.escaped (string_of_charstream ~keepcs:true bcs));
+    let s:string = read_until_one_of ~failsafe:true ~caller:"ifndef" !blank_chars cs in
+      assert(s<>"");
       try
         begin
           ignore(find s !env); (*raises Not_found if not found*)
@@ -187,7 +190,7 @@ end = struct
             let b1 = Buffer.create 42 in
               !main_process cs (Out.Buffer b1);
               Out.output_buffer out b1;
-              Out.output_char out '\n';
+              (* Out.output_char out '\n'; *)
               let b2 = Buffer.create 42 in
                 !main_process bcs (Out.Buffer b2);
                 Out.output_buffer out b2;
@@ -195,7 +198,7 @@ end = struct
         else
           begin
             Out.output_charstream out cs;
-            Out.output_char out '\n';
+            (* Out.output_char out '\n'; *)
             Out.output_charstream out bcs;
           end
 
@@ -244,7 +247,7 @@ let command arg charstream (out:Out.t) =
 let ifcmd last_cond nesting arg charstream out =
   if !debug then 
     Printf.eprintf "ifcmd <%s> <%s>\n%!"
-      (String.escaped (string_of_charstream arg)) (String.escaped (string_of_charstream charstream));
+      (String.escaped (string_of_charstream ~keepcs:true arg)) (String.escaped (string_of_charstream ~keepcs:true charstream));
   if !last_cmd = 0 then
     begin
       last_cond := Some true;
@@ -253,7 +256,7 @@ let ifcmd last_cond nesting arg charstream out =
           let b1 = Buffer.create 42 in
             !main_process arg (Out.Buffer b1);
             Out.output_buffer out b1;
-            Out.output_char out '\n';
+            (* Out.output_char out '\n'; *)
           let b2 = Buffer.create 42 in
             !main_process charstream (Out.Buffer b2);
             Out.output_buffer out b2;
@@ -261,7 +264,7 @@ let ifcmd last_cond nesting arg charstream out =
       else
         begin
           Out.output_charstream out arg;
-          Out.output_char out '\n';
+          (* Out.output_char out '\n'; *)
           Out.output_charstream out charstream;
         end
     end
@@ -277,7 +280,7 @@ let cmd arg charstream (out:Out.t) =
           if not (!ignore_exec_error) then
             Pervasives.failwith 
               (Printf.sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d." 
-                 (string_of_charstream arg) ec file line column)
+                 (string_of_charstream ~keepcs:true arg) ec file line column)
           else
             ()
 
@@ -316,7 +319,7 @@ let builtins : action_set ref =
   let elze = Variable.elze in
   let error _ _ s cs _ =
     parse_error 
-      ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." (string_of_charstream s))
+      ~msg:(Printf.sprintf "your message is <%s>. No matter what, I'm exiting." (string_of_charstream ~keepcs:true s))
       (cs.where());
     Pervasives.exit 1
   in
@@ -369,18 +372,18 @@ let apply_builtin action_name location =
 let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (arguments:charstream) (charstream:charstream) (out: Out.t) =
   if !debug then
     begin
-      Printf.eprintf "exec: %!";
+      Printf.eprintf "Exec: %!";
       (* action_name : thing to do; arguments : arguments on the first
          line; charstream : what follows the first line (if any). *)
       Printf.eprintf "action_name:<%s> arguments:<%s>\n%!"
-        action_name (string_of_charstream arguments);
+        action_name (string_of_charstream ~keepcs:true arguments);
     end;
   if action_name.[0] <> '-' then
-    begin
+    begin (* builtins *)
       if nesting then
         begin
           if is_lazy action_name then
-            begin (* nesting and lazy: TODO *)
+            begin (* nesting and lazy: it's delegated! *)
               apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
           else
@@ -397,8 +400,13 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
                   !main_process charstream (Out.Buffer buff2);
                   charstream_of_string ~location:x (Buffer.contents buff2)
               in
+                if !debug then Printf.eprintf "W???<%s><%s>\n%!" (String.escaped (string_of_charstream ~keepcs:true arguments)) (String.escaped (string_of_charstream ~keepcs:true charstream));
                 apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
+        end
+      else
+        begin (* no nesting *)
+          apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
         end
     end
   else
@@ -413,8 +421,9 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
         (apply_builtin "cmd" (charstream.where())) last_cond nesting
           (charstream_of_string (String.sub action_name 1 (String.length action_name - 1) ^ " " ^ string_of_charstream arguments))
           charstream out;
-      if !debug then Printf.eprintf "???%!";
-    end
+      if !debug then Printf.eprintf "cmd... mpp_actions.ml:>???%!";
+    end;
+  Out.flush out
 
 let list_builtins () =
   let m =

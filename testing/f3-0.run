@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cat > f3.mpp <<EOF
+(( ifdef x 42))
+EOF
+
+cat > f3.expected <<EOF
+
+EOF
+
+mpp < f3.mpp > f3.out
+
+diff f3.out f3.expected
+

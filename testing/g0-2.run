@@ -1,0 +1,25 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+{{ tryget x}}
+{{ux ifdef x {{ get +}}
+
+ux}}
+{{ get *}}
+EOF
+
+cat > $0.expected <<EOF
+
+
+koala
+
+
+koala
+
+
+koala
+EOF
+
+mpp -set +=plop -set *=koala -w -o $0.out $0.mpp $0.mpp $0.mpp
+
+diff $0.out $0.expected

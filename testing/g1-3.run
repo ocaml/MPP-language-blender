@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+This example is very hard to read. It's not really meant to be read.
+XX- tryget x -YY
+{{ux ifdef x XX{{+<||{{ get {{++<||{{YY
+
+ux}}
+{{KLM get * 
+KLM}}
+
+XX(( echo PLOP X  
+
+((YY
+
+EOF
+
+cat > $0.expected <<EOF
+This example is very hard to read. It's not really meant to be read.
+koala
+PLOP X
+This example is very hard to read. It's not really meant to be read.
+koala
+PLOP X
+This example is very hard to read. It's not really meant to be read.
+koala
+PLOP X
+EOF
+
+mpp -so XX -sc YY -snl -its -set +=plop -set *=koala -w -o $0.out $0.mpp $0.mpp $0.mpp
+
+diff $0.out $0.expected

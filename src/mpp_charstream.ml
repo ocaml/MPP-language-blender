@@ -59,14 +59,6 @@ let parse_error : ?start:location -> ?msg:string -> location -> unit =
             end
 
 
-let string_of_charstream c =
-  let b = Buffer.create 42 in
-  let rec loop () =
-    match c.take () with
-      | None -> Buffer.contents b
-      | Some c -> Buffer.add_char b c; loop()
-  in loop()
-
 let output_charstream out c =
   let rec loop () =
     match c.take () with
@@ -253,7 +245,7 @@ let rec eat (cs:Mpp_charset.t) charstream =
           charstream.push c            
 
 
-let read_until ?(failsafe=false) c charstream : string =
+let read_until ?(caller="") ?(failsafe=false) c charstream : string =
   if !debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =
@@ -279,12 +271,14 @@ let read_until ?(failsafe=false) c charstream : string =
             Buffer.contents b
           else
             begin
-              parse_error ~msg:"Cound read until far enough" (charstream.where());
+              parse_error
+                ~msg:(Printf.sprintf "Couldn't read far enough. I could read <%s>." (Buffer.contents b))
+                (charstream.where());
               exit 1
             end
   in loop ()
 
-let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
+let read_until_one_of ?(caller="") ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
   if !debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
   let b = Buffer.create 128 in
   let rec loop () =
@@ -315,7 +309,9 @@ let read_until_one_of ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(
             Buffer.contents b
           else
             begin
-              parse_error ~msg:"Cound read until far enough" (charstream.where());
+              parse_error
+                ~msg:(Printf.sprintf "Couldn't read far enough. I could read <%s>. I was looking for [%s].%s" (Buffer.contents b) (Mpp_charset.to_escaped_string cs) (if caller <> "" then Printf.sprintf " Caller: %s." caller else ""))
+                (charstream.where());
               exit 1
             end
   in loop ()
@@ -470,3 +466,38 @@ let append cs1 cs2 =
       insert = (fun c -> if !current_is_cs1 then cs1.insert c else cs2.insert c);
       where  = (fun () -> if !current_is_cs1 then cs1.where() else cs2.where())
     }
+
+let delete_trailing_spaces s =
+  if s = "" then
+    s
+  else
+    let l = ref (String.length s) in
+      while 
+        (match s.[!l - 1] with
+          | '\n' | '\t' | ' ' | '\r' -> true
+          | _ -> false)
+      do
+        decr l
+      done;
+      if !l = String.length s then
+        s
+      else
+        String.sub s 0 !l
+          
+
+
+let string_of_charstream ?(keepcs=false) c =
+  let x = c.where() in
+  let b = Buffer.create 42 in
+  let rec loop () =
+    match c.take () with
+      | None -> Buffer.contents b
+      | Some c -> Buffer.add_char b c; loop()
+  in
+  let res = loop() in
+    match keepcs with
+      | true ->
+          c.insert (charstream_of_string ~location:x res);
+          res
+      | false ->
+          res

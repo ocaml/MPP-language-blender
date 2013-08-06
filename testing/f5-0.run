@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+(( ifdef x 42
+))
+EOF
+
+cat > $0.expected <<EOF
+42
+
+EOF
+
+mpp -set x= < $0.mpp > $0.out
+
+diff $0.out $0.expected
+

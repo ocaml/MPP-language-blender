@@ -1,0 +1,22 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+{{x ifdef P
+ {{ echo 0 }}
+ {{ echo 0 }}
+x}}
+
+
+EOF
+
+cat > $0.expected <<EOF
+
+
+
+EOF
+
+mpp -set x=42 -w -o $0.out $0.mpp
+
+diff $0.out $0.expected
+
+

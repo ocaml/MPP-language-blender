@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cat > $0.mpp <<EOF
+{{ get x}}
+{{ux ifdef x {{ get x}}
+ux}}
+EOF
+
+cat > $0.expected <<EOF
+plop
+plop
+
+plop
+plop
+
+EOF
+
+mpp -set x=plop -w -o $0.out $0.mpp $0.mpp
+
+diff $0.out $0.expected
+

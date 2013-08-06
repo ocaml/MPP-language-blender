@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cat > f2.mpp <<EOF
+(( echo 42))
+(( echo 42))
+(( echo 42))
+(( echo 42))
+(( echo 42))
+EOF
+
+cat > f2.expected <<EOF
+42
+42
+42
+42
+42
+EOF
+
+mpp < f2.mpp > f2.out
+
+diff f2.out f2.expected
