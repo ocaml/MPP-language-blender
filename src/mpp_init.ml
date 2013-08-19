@@ -23,8 +23,8 @@ let endline_comments_token = ref "%%"
 let open_comments_token = ref "/*"
 let close_comments_token = ref "*/"
 
-let open_special_token = ref "{<"
-let close_special_token = ref ">}"
+let open_foreign_token = ref "{<"
+let close_foreign_token = ref ">}"
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
@@ -36,8 +36,8 @@ let space_chars = Mpp_charset.of_list [' '; '\t']
 let blank_chars = Mpp_charset.of_list ['\n'; '\r';' '; '\t']
 
 
-(** special blocks *)
-type special_block_description = {
+(** foreign blocks *)
+type foreign_block_description = {
   name : string;
   command : string;
   suffix: string;
@@ -48,7 +48,7 @@ type special_block_description = {
 }
     
 
-let special_blocks = [
+let foreign_blocks = [
   { name = "ocaml";
     command = "ocaml";
     suffix = ".ml";
@@ -65,7 +65,7 @@ let special_blocks = [
   };
 ]
 
-let default_special_block = 
+let default_foreign_block = 
   { name = "";
     command = "";
     suffix = "";
@@ -75,17 +75,17 @@ let default_special_block =
     force_line_number = (fun ?(filename="") _ -> "");
   }
 
-let special : special_block_description ref = ref default_special_block
+let foreign : foreign_block_description ref = ref default_foreign_block
 
-let set_special s =
-  let r = List.find (fun { name ; _ } -> name = s) special_blocks in
-  special := r
+let set_foreign s =
+  let r = List.find (fun { name ; _ } -> name = s) foreign_blocks in
+  foreign := r
 
-let list_specials () = 
-  Printf.printf "List of special block languages available:\n";
+let list_foreign () = 
+  Printf.printf "List of foreign block languages available:\n";
   List.iter 
     (fun {name; _} -> Printf.printf "%s\n" name) 
-    special_blocks;
+    foreign_blocks;
   Pervasives.exit 0
 
 (* PROPAGATION *)  

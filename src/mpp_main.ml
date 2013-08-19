@@ -38,11 +38,11 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       else if match_token !open_comments_token charstream then
         open_comments_token_action()
 
-      else if match_token !open_special_token charstream then
-        open_special_token_action()
+      else if match_token !open_foreign_token charstream then
+        open_foreign_token_action()
 
-      else if match_token !close_special_token charstream then
-        close_special_token_action()
+      else if match_token !close_foreign_token charstream then
+        close_foreign_token_action()
 
       else if match_token !close_token charstream then
         close_token_action()
@@ -58,7 +58,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       | Some c -> charstream.push c;  loop last_cond
 
   and flush_default() =
-    let r = !Mpp_init.special.print (Buffer.contents default_buffer) in
+    let r = !Mpp_init.foreign.print (Buffer.contents default_buffer) in
       Out.output_string out r;
       Buffer.clear default_buffer;
       Out.flush out
@@ -67,12 +67,12 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   and default last_cond = function
     | None -> ()
     | Some c ->
-        Buffer.add_string default_buffer (!Mpp_init.special.char_escape c);
+        Buffer.add_string default_buffer (!Mpp_init.foreign.char_escape c);
         loop last_cond
 
-  and open_special_token_action last_cond =
+  and open_foreign_token_action last_cond =
     flush_default();
-    let x = read_until_word charstream (!close_special_token) in
+    let x = read_until_word charstream (!close_foreign_token) in
       Out.output_string out x
 
   (* new block *)
@@ -162,10 +162,10 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         exit 1
       end
 
-  and close_special_token_action() = 
+  and close_foreign_token_action() = 
     if not (!ignore_orphan_closing_tokens) then
       begin
-        parse_error ~msg:"Closing unopened special block." (charstream.where());
+        parse_error ~msg:"Closing unopened foreign block." (charstream.where());
         exit 1
       end
 
@@ -214,8 +214,8 @@ let init() =
       [
         "so", (fun _lc _n x _cs _out -> open_token := string_of_charstream x), "Sets the opening token. Related: sc.";
         "sc", (fun _lc _n x _cs _out -> close_token := string_of_charstream x), "Sets the closing token. Related: so.";
-        "sso", (fun _lc _n x _cs _out -> open_special_token := string_of_charstream x), "Sets the special opening token. Related: ssc.";
-        "ssc", (fun _lc _n x _cs _out -> close_special_token := string_of_charstream x), "Sets the special closing token. Related: sso.";
+        "sso", (fun _lc _n x _cs _out -> open_foreign_token := string_of_charstream x), "Sets the foreign opening token. Related: ssc.";
+        "ssc", (fun _lc _n x _cs _out -> close_foreign_token := string_of_charstream x), "Sets the foreign closing token. Related: sso.";
         "sec", (fun _lc _n x _cs _out -> endline_comments_token := string_of_charstream x), "Sets the endline comments token.";
         "soc", (fun _lc _n x _cs _out -> open_comments_token := string_of_charstream x), "Sets the opening comments token. Related: scc.";
         "scc", (fun _lc _n x _cs _out -> close_comments_token := string_of_charstream x), "Sets the endline comments token. Related: soc.";
@@ -305,8 +305,8 @@ let _ =
               "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
               "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
               "-scn", Arg.Set_string(close_nesting_token), Printf.sprintf "token Set close token for blocks which allow nesting. Default is %s." !close_nesting_token;
-              "-sos", Arg.Set_string(open_special_token), Printf.sprintf "token Set open special token. Default is %s." !open_special_token;
-              "-scs", Arg.Set_string(close_special_token), Printf.sprintf "token Set close special token. Default is %s." !close_special_token;
+              "-sos", Arg.Set_string(open_foreign_token), Printf.sprintf "token Set open foreign token. Default is %s." !open_foreign_token;
+              "-scs", Arg.Set_string(close_foreign_token), Printf.sprintf "token Set close foreign token. Default is %s." !close_foreign_token;
               "-soc", Arg.Set_string(open_comments_token), Printf.sprintf "token Set open comments token. Default is %s." !open_comments_token;
               "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
               "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
@@ -315,8 +315,8 @@ let _ =
                 let vn = read_until_one_of ~failsafe:true (Mpp_charset.of_list ['='; ' ';'\t']) cs in
                   Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
               "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-              "-l", Arg.String(Mpp_init.set_special), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
-              "-ll", Arg.Unit(Mpp_init.list_specials), " List available special languages. Advanced use: to add one, cf. the file mpp_init.ml";
+              "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
+              "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
               "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
               "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
             ]
