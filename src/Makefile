@@ -24,7 +24,10 @@ default:mpp
 # lib/ocamltohtml/ocamltohtml_lexer.ml:lib/ocamltohtml/ocamltohtml_lexer.mll
 # 	cd lib/ocamltohtml && make $$(basename $@)
 
-mpp:$(MPP_CMOs)
+mpp:mpp.opt
+	cp mpp.opt mpp
+
+mpp.byte:$(MPP_CMOs)
 	$(OCAMLC) -g -o $@ $+
 
 mpp.opt:$(MPP_CMXs)
