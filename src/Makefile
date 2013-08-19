@@ -48,7 +48,7 @@ all:mpp mpp.out mpp-ocaml-toplevel-output
 	$(OCAMLOPT) -I lib/ocamltohtml -c $<
 
 clean:
-	rm -f *.cm[oxi] mpp mpp.opt *~
+	rm -f *.cm[oxi] mpp mpp.opt *~ *.o
 
 Makefile.depend:$(MPP_MLs)
 	ocamldep $+ > $@
