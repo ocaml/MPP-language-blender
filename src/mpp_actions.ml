@@ -108,7 +108,7 @@ end = struct
 
   let set s cs _ =
     let variable =
-      read_until_one_of !blank_chars s
+      read_until_one_of ~failsafe:true !blank_chars s
     in
     let value = 
       match string_of_charstream cs with
