@@ -1,0 +1,16 @@
+_build/
+*.data
+*.log
+*.native
+*.opt
+*.byte
+#*
+.#*
+*~
+*.cmi
+*.cma
+*.cmo
+*.cmx
+*.cmxa
+*.o
+
