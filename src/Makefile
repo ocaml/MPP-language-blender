@@ -15,10 +15,9 @@ OCAMLLIBS = str
 OCAMLLIBS_CMA = $(addsuffix .cma, $(OCAMLLIBS))
 OCAMLLIBS_CMXA = $(addsuffix .cmxa, $(OCAMLLIBS))
 
-OCAMLC = ocamlc $(OCAMLLIBS_CMA)
+OCAMLC = ocamlc -g $(OCAMLLIBS_CMA)
 OCAMLOPT = ocamlopt $(OCAMLLIBS_CMXA)
 
-# Default is the bytecode version because it takes less time to compile.
 default:mpp
 
 # lib/ocamltohtml/ocamltohtml_lexer.ml:lib/ocamltohtml/ocamltohtml_lexer.mll
