@@ -67,7 +67,8 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   and default last_cond = function
     | None -> ()
     | Some c ->
-        Buffer.add_string default_buffer (!Mpp_init.foreign.char_escape c);
+        Buffer.add_string default_buffer
+          (!Mpp_init.foreign.string_escape (String.make 1 c));
         loop last_cond
 
   and open_foreign_token_action last_cond =
