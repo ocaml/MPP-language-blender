@@ -73,7 +73,13 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   and open_foreign_token_action last_cond =
     flush_default();
     let x = read_until_word charstream (!close_foreign_token) in
-      Out.output_string out x
+    if !save_newlines then 
+      begin match charstream.take() with
+        | Some '\n' -> ()
+        | Some c -> charstream.push c
+        | None -> ()
+      end;
+    Out.output_string out x
 
   (* new block *)
   and open_token_action last_cond ~nesting =
