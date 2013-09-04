@@ -425,7 +425,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
     end;
   Out.flush out
 
-let list_builtins () =
+let list_builtins out =
   let m =
     4 + Mpp_stringmap.fold
       (fun k _ r -> max (String.length k) r)
@@ -437,18 +437,19 @@ let list_builtins () =
   in
     Mpp_stringmap.iter
       (fun k (_e, doc) ->
-         Printf.printf "%s %s\n" (pad k) doc)
-      !builtins;
-    Pervasives.exit 0
+         Out.printf out "%s %s\n" (pad k) doc;
+         Out.flush out)
+      !builtins
 
 let register (name:string) (f: action) (d:documentation) : unit =
+  (* type action = last_condition -> nesting -> action_args -> charstream ->  Out.t -> unit *)
   builtins := Mpp_stringmap.add name (f,d) !builtins
 
 
 let _ =
   register
     "builtins"
-    (fun _ _ _ -> list_builtins())
+    (fun _ _ _ _ out -> list_builtins out)
     "List all available builtins."
 
 let _ =
@@ -460,7 +461,31 @@ let _ =
     "ifcmd";
   ]
 
+let _ =
+  register
+    "getenv"
+    (fun _ _ s cs out ->
+       let v = string_of_charstream s in
+       try
+         Out.output_string out (Sys.getenv v);
+         Out.flush out
+       with Not_found ->
+         parse_error
+           ~msg:(Printf.sprintf "You tried to get the value of process-environment variable %s, which doesn't exist." v)
+           (cs.where());
+        Pervasives.exit 1
+    )
+    "Get a process-environment variable. Stops if it doesn't find it.";
+  register
+    "trygetenv"
+    (fun _ _ s _ out ->
+       try
+         Out.output_string out (Sys.getenv(string_of_charstream s));
+         Out.flush out
+       with Not_found -> ())
+    "Try to get a process-environment variable. Continues if it doesn't find it."
 
-let builtins = () (* prevent builtins from being used outside. Perhaps I'll switch to using an mli file. *)
+
+let builtins = () (* prevent builtins from being used outside. Eventually, I'll switch to using an mli file. *)
 
 
