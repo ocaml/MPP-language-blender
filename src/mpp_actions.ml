@@ -217,17 +217,6 @@ end
   (* / END VARIABLES *)
 
 
-let cat (out:Out.t) filename =
-  if Sys.file_exists filename then
-    let i = open_in filename in
-      try while true do
-        Out.output_char out (input_char i)
-      done with End_of_file -> ()
-  else
-    Printf.eprintf
-      "builtin cat error: file <%s> doesn't exist.\n%!"
-      filename
-
 let last_cmd = ref 0
 
 let command arg charstream (out:Out.t) =
@@ -237,7 +226,7 @@ let command arg charstream (out:Out.t) =
     output_charstream otmp charstream;
     close_out otmp;
     let ec = Sys.command ("( cat " ^ tmp ^ " | " ^ string_of_charstream arg ^ " ) > " ^ tmp2 ) in
-    let () = cat out tmp2 in
+    let () = Out.cat out tmp2 in
       Sys.remove tmp;
       Sys.remove tmp2;
       last_cmd := ec;
@@ -305,7 +294,7 @@ let builtins : action_set ref =
   let echo _ _ =
     (fun a _cs out -> Out.output_charstream out a) in
   let cat _ _ =
-    (fun filename _cs out -> cat out (string_of_charstream filename); Out.flush out)
+    (fun filename _cs out -> Out.cat out (string_of_charstream filename); Out.flush out)
   in
   let set _ _ = Variable.set in
   let unset _ _ = Variable.unset in
