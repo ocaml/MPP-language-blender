@@ -6,12 +6,14 @@ OCAMLC   = ocamlc -I ../../
 OCAMLOPT = ocamlopt  -I ../../
 
 all : ocamltohtml
+ocamltohtml:ocamltohtml.opt
+	cp $< $@
 
-ocamltohtml : ocamltohtml_lexer.cmo ocamltohtml_main.cmo
-	$(OCAMLC) $(MPP_CMOs) $+ -o ocamltohtml
+ocamltohtml.byte : ocamltohtml_lexer.cmo ocamltohtml_main.cmo
+	$(OCAMLC) $(MPP_CMOs) $+ -o $@
 
 ocamltohtml.opt : ocamltohtml_lexer.cmx ocamltohtml_main.cmx
-	$(OCAMLOPT) $(MPP_CMXs) $+ -o ocamltohtml
+	$(OCAMLOPT) $(MPP_CMXs) $+ -o $@
 
 %.cmo:%.ml
 	$(OCAMLC) -c $<
