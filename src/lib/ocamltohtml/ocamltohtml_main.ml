@@ -19,6 +19,46 @@ let html_of_ocaml filename out =
 let html_of_ocaml_default_css out =
   Printf.fprintf out "<style type='text/css'>/* <!-- */
 .ocaml{background-color:#EEE}
+
+.c {
+  color: #408080;
+  font-style: italic;
+}
+/* Comment */
+.err {
+  border: 1px solid #ff0000;
+}
+/* Error */
+.k {
+  color: #008000;
+  font-weight: bold;
+}
+/* Keyword */
+.o {
+  color: #666666;
+}
+/* Operator */
+.cm {
+  color: #408080;
+  font-style: italic;
+}
+/* Comment.Multiline */
+.cp {
+  color: #bc7a00;
+}
+/* Comment.Preproc */
+.c1 {
+  color: #408080;
+  font-style: italic;
+}
+/* Comment.Single */
+.cs {
+  color: #408080;
+  font-style: italic;
+}
+/* Comment.Special */
+
+
 .kwd{color: green;}
 .kwd1{color: red;}
 .kwd2{color: blue;}
@@ -35,7 +75,6 @@ let html_of_ocamlc args out =
   match Sys.command (args ^ " > " ^ tmp1 ^ " 2> " ^ tmp) with
     | 2 ->
         let open Mpp_charstream in
-(*         let () = Mpp_actions.cat out tmp in *)
         let cs = charstream_of_inchannel tmp (open_in tmp) in
         let _ = read_until '"' cs in
         let _ = charstream_take_n 1 cs in
@@ -77,7 +116,7 @@ let html_of_ocamlc args out =
     | 0 -> ()
     | n -> 
         Printf.fprintf out "<pre class='error'>Command %s returned with code %d, I don't know what to do with it. Here's the output:\n" args n;
-        Mpp_actions.cat out tmp1;
+        Mpp_out.cat (Mpp_out.Out_channel out) tmp1;
         Printf.fprintf out "</span>"
 
 
@@ -119,6 +158,6 @@ let _ =
             ignore (Ocamltohtml_lexer.token lexbuf)
           done
       with Ocamltohtml_lexer.Eof ->
-        Printf.fprintf oc "</pre></body></html>";
+        if !html_box then Printf.fprintf oc "</pre></body></html>";
         (try close_in ic with _ -> ());
         exit 0

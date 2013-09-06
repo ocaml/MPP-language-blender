@@ -1,18 +1,17 @@
-MPP_LIB = ../../mpp_charstream.ml
+MPP_LIB =  ../../mpp_charset.ml ../../mpp_charstream.ml ../../mpp_out.ml ../../mpp_stringmap.ml ../../mpp_actions.ml 
 MPP_CMOs = $(addsuffix .cmo, $(basename $(MPP_LIB)))
 MPP_CMXs = $(addsuffix .cmx, $(basename $(MPP_LIB)))
 
-
-OCAMLC   = ocamlc $(MPP_CMOs)
-OCAMLOPT = ocamlopt $(MPP_CMXs)
+OCAMLC   = ocamlc -I ../../
+OCAMLOPT = ocamlopt  -I ../../
 
 all : ocamltohtml
 
 ocamltohtml : ocamltohtml_lexer.cmo ocamltohtml_main.cmo
-	$(OCAMLC) $+ -o ocamltohtml
+	$(OCAMLC) $(MPP_CMOs) $+ -o ocamltohtml
 
 ocamltohtml.opt : ocamltohtml_lexer.cmx ocamltohtml_main.cmx
-	$(OCAMLOPT) $+ -o ocamltohtml
+	$(OCAMLOPT) $(MPP_CMXs) $+ -o ocamltohtml
 
 %.cmo:%.ml
 	$(OCAMLC) -c $<
@@ -32,3 +31,5 @@ clean:
 
 all2:
 	ocamllex ocamltohtml_lexer.mll  && ocamlc ocamltohtml_lexer.ml && ocamlc ocamltohtml_lexer.cmo  ocamltohtml_main.ml -o ocamltohtml
+
+

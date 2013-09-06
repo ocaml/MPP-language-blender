@@ -49,13 +49,13 @@ let open_env e =
             Stack.push e toclose;
             match e with
               | NIL -> "<span class='nil'>"
-              | KWD1 -> "<span class='kwd1'>"
-              | KWD2 -> "<span class='kwd2'>"
-              | KWD -> "<span class='kwd'>"
-              | STR -> "<span class='str'>"
-              | MODULE -> "<span class='mname'>"
-              | OP -> "<span class='op'>"
-              | COMMENTS -> "<span class='com1'>"
+              | KWD1 -> "<span class='k'>"
+              | KWD2 -> "<span class='o'>"
+              | KWD -> "<span class='k'>"
+              | STR -> "<span class='s'>"
+              | MODULE -> "<span class='m'>"
+              | OP -> "<span class='o'>"
+              | COMMENTS -> "<span class='c'>"
           end
     | 1 ->
         if e = COMMENTS then 
@@ -166,7 +166,15 @@ rule token = parse
         }
 
   | ((("let"|"and"|"module") ( ([' ' '\t' '\n']* ) "rec")?  )
-    | "in" | "include" | "open" | "rec") as lxm
+    | "in" | "include" | "open" | "rec"  | "exception" | "external"
+    | "method"  | "sig" | "struct"
+    | "type" | "val" | "virtual"| "private"
+    | "mutable" | "new" | "open" | "end" | "begin"
+    | "class" | "do" | "done" | "downto" | "else" | "fun" | "function"
+    | "functor" | "if" | "inherit" | "initializer"
+    | "try"
+    | "when" | "while" | "with"
+    ) as lxm
       {open_env KWD1 ;
        html_escape lxm ;
        close_env KWD1}
@@ -176,13 +184,12 @@ rule token = parse
        html_escape lxm ; 
        close_env KWD2}
 
-  | ( "and" | "as" | "assert" | "asr" | "begin" | "class" | "constraint" | "do" | "done"
-    | "downto" | "else" | "end" | "exception" | "external" | "false" | "for" | "fun" 
-    | "function" | "functor" | "if" | "inherit" | "initializer"
-    | "land" | "lazy" | "let" | "lor" | "lsl" | "lsr" | "lxor" | "match" | "method"
-    | "mod" | "module" | "mutable" | "new" | "object" | "of" | "open" | "or" | "private"
-    | "rec" | "sig" | "struct" | "then" | "to" | "true" | "try" | "type" | "val" | "virtual"
-    | "when" | "while" | "with" | "=" | "->" )
+  | ( "as" | "assert" | "asr" | "constraint" 
+     | "false"
+     | "for" | "lazy" | "match"    | "then" |  "of" | "to" 
+     | "land" | "lor" | "lsl" | "lsr" | "lxor"
+     | "mod"| "or" 
+     | "true" | "=" | "->" )
       as lxm { open_env KWD ;
                print_string lxm;
                close_env KWD }
