@@ -35,6 +35,6 @@ all2:
 	ocamllex ocamltohtml_lexer.mll  && ocamlc ocamltohtml_lexer.ml && ocamlc ocamltohtml_lexer.cmo  ocamltohtml_main.ml -o ocamltohtml
 
 
-ocamltohtml_all.ml:
-	for i in ../../mpp_charset.ml ../../mpp_charstream.ml ../../mpp_out.ml ../../mpp_stringmap.ml ../../mpp_actions.ml  ocamltohtml_lexer.ml ; do echo module ; ocaml -stdin <<< "print_endline (String.capitalize Sys.argv.(1))" $(basename $i .ml) ; echo = struct ; cat $i ; echo end ; done > ocamltohtml_all.ml ; cat ocamltohtml_main.ml >> ocamltohtml_all.ml
+ocamltohtml_all.ml:ocamltohtml_lexer.ml
+	for i in ../../mpp_charset.ml ../../mpp_charstream.ml ../../mpp_out.ml ../../mpp_stringmap.ml ../../mpp_actions.ml  ocamltohtml_lexer.ml ; do echo module ; ocaml -stdin <<< "print_endline (String.capitalize Sys.argv.(1))" $$(basename $$i .ml) ; echo = struct ; cat $$i ; echo end ; done > ocamltohtml_all.ml ; cat ocamltohtml_main.ml >> ocamltohtml_all.ml
 
