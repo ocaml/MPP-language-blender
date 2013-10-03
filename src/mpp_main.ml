@@ -73,7 +73,24 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
 
   and open_foreign_token_action last_cond =
     flush_default();
-    let x = read_until_word charstream (!close_foreign_token) in
+    let block_name = (* block_name: syntactic "tool" *)
+      match charstream.take() with
+        | None ->
+            parse_error
+              ~msg:"No characters left to read right after an opening! (F2)" 
+              (charstream.where());
+            exit 1
+        | Some (' ' | '\t') ->
+            ""
+        | Some c ->
+            charstream.push c;
+            let () =
+              if debug then Printf.eprintf "peek<%s>\n%!"
+                (String.escaped (charstream_peek ~n:20 charstream))
+            in
+              (read_until ~failsafe:true ' ' charstream)
+    in
+    let x = read_until_word charstream (block_name ^ !close_foreign_token) in
     if !save_newlines then 
       begin match charstream.take() with
         | Some '\n' -> ()
@@ -244,94 +261,73 @@ let _ =
   let process_one_file filename =
     if not(Sys.file_exists filename) then
       begin
-        if !continue then
-          ()
-        else
-          (Printf.eprintf "Error: file <%s> does not exist, I will stop.\n%!" filename;
+        if not !continue then
+          (Printf.eprintf "Error: input file <%s> does not exist, I'm stopping right here.\n%!" filename;
            exit 4)
       end
-    else (* filename does exist *)
-      if (try Filename.chop_extension filename ^ ".mpp" = filename with Invalid_argument _ -> false)
-        || !common_output_filename <> ""
-      then
-        (begin
-          let outputfilename =
-            if !common_output_filename = "" then
-              Filename.chop_extension filename 
-            else
-              !common_output_filename
+    else (* filename does exist, so it's fine. *)
+    if !common_output_filename <> ""
+    then
+      (begin
+        match !common_output with
+        | None ->
+          let out =
+            Out.Out_channel
+              (open_out_gen
+                 [Open_wronly;Open_creat;Open_trunc;Open_binary]
+                 0o640
+                 !common_output_filename)
           in
-            if outputfilename <> "/dev/stdout" && Sys.file_exists outputfilename && not !overwrite then
-              begin
-                Printf.eprintf "Warning: file <%s> already exists, I won't overwrite it. You might want to use -w.\n%!"
-                  outputfilename (* => do nothing *)
-              end
-            else
-              begin match !common_output_filename with
-                | "" ->
-                    let out =
-                      Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename)
-                    in
-                      preprocess (charstream_of_inchannel filename (open_in filename)) out;
-                      at_least_one_file_processed := true
-                | outputfilename ->
-                    match !common_output with
-                      | None ->
-                          let out = Out.Out_channel(open_out_gen [Open_wronly;Open_creat;Open_trunc;Open_binary] 0o640 outputfilename) in
-                            common_output := Some out;
-                            preprocess (charstream_of_inchannel filename (open_in filename)) out;
-                            at_least_one_file_processed := true
-                      | Some out ->
-                          preprocess (charstream_of_inchannel filename (open_in filename)) out;
-                          at_least_one_file_processed := true
-              end
-        end)
+          common_output := Some out;
+          preprocess (charstream_of_inchannel filename (open_in filename)) out;
+          at_least_one_file_processed := true
+        | Some out ->
+          preprocess (charstream_of_inchannel filename (open_in filename)) out;
+          at_least_one_file_processed := true
+      end)
     else
       begin
-        if filename <> "/dev/stdin" then Printf.eprintf "Warning: filename <%s> does not have .mpp extension. So I output on stdout.\n%!" filename;
         preprocess (charstream_of_inchannel filename (open_in filename)) (Out.Out_channel stdout);
         at_least_one_file_processed := true
       end
   in
-    try
-      if l > 1 then
-        begin
-          let aligned =
-            Arg.align [
-              "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
-              (*               "-overwrite", Arg.Set(overwrite), " Overwrite existing destination files."; *)
-              "-w", Arg.Set(overwrite), " Overwrite existing destination files.";
-              (*               "-continue", Arg.Set(continue), " Continue even if an input file doesn't exist."; *)
-              "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
-              "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
-              "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
-              "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
-              "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces (i.e. spaces at end of block and end of command line).";
-              "-b", Arg.Unit(fun () -> Mpp_actions.list_builtins (Out.Out_channel stdout); exit 0), " List builtins.";
-              "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
-              "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
-              "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
-              "-scn", Arg.Set_string(close_nesting_token), Printf.sprintf "token Set close token for blocks which allow nesting. Default is %s." !close_nesting_token;
-              "-sos", Arg.Set_string(open_foreign_token), Printf.sprintf "token Set open foreign token. Default is %s." !open_foreign_token;
-              "-scs", Arg.Set_string(close_foreign_token), Printf.sprintf "token Set close foreign token. Default is %s." !close_foreign_token;
-              "-soc", Arg.Set_string(open_comments_token), Printf.sprintf "token Set open comments token. Default is %s." !open_comments_token;
-              "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
-              "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
-              "-set", Arg.String(fun s ->
+  try
+    if l > 1 then
+      begin
+        let aligned =
+          Arg.align [
+            "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
+            "-w", Arg.Set(overwrite), " @deprecated [Overwrite existing destination files]. Now MPP always overwrites.";
+            "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
+            "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
+            "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
+            "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
+            "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces (i.e. spaces at end of block and end of command line).";
+            "-b", Arg.Unit(fun () -> Mpp_actions.list_builtins (Out.Out_channel stdout); exit 0), " List builtins.";
+            "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
+            "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
+            "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
+            "-scn", Arg.Set_string(close_nesting_token), Printf.sprintf "token Set close token for blocks which allow nesting. Default is %s." !close_nesting_token;
+            "-sos", Arg.Set_string(open_foreign_token), Printf.sprintf "token Set open foreign token. Default is %s." !open_foreign_token;
+            "-scs", Arg.Set_string(close_foreign_token), Printf.sprintf "token Set close foreign token. Default is %s." !close_foreign_token;
+            "-soc", Arg.Set_string(open_comments_token), Printf.sprintf "token Set open comments token. Default is %s." !open_comments_token;
+            "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
+            "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
+            "-set", Arg.String(fun s ->
                 let cs = charstream_of_string s in 
                 let vn = read_until_one_of ~failsafe:true (Mpp_charset.of_list ['='; ' ';'\t']) cs in
-                  Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
-              "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-              "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
-              "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
-              "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
-              "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
-            ]
-          in
-            Arg.parse
-              aligned
-              process_one_file
-              ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
+                Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
+            "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
+            "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
+            "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
+            "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
+            "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
+          ]
+        in
+        Arg.parse
+          aligned
+          process_one_file
+          ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
                   ~ If a file name doesn't have the .mpp extension, it will output on stdout.
                     ~ If you don't give any file name, it will use standard input (/dev/stdin).
                       ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
@@ -340,15 +336,15 @@ let _ =
 ~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
 List of options:")
-        end;
-      if not !at_least_one_file_processed then
-        begin
-          (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
-          process_one_file "/dev/stdin"
-        end;
-    with e ->
-      let bt = Printexc.get_backtrace () in
-        if debug then Printf.eprintf "%s\n%!" bt;
-        if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
-        Pervasives.exit 1
+      end;
+    if not !at_least_one_file_processed then
+      begin
+        (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
+        process_one_file "/dev/stdin"
+      end;
+  with e ->
+    let bt = Printexc.get_backtrace () in
+    if debug then Printf.eprintf "%s\n%!" bt;
+    if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
+    Pervasives.exit 1
 
