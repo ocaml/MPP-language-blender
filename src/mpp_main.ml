@@ -91,7 +91,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
               (read_until ~failsafe:true ' ' charstream)
     in
     let x = read_until_word charstream (block_name ^ !close_foreign_token) in
-    if !save_newlines then 
+    if !save_newlines then
       begin match charstream.take() with
         | Some '\n' -> ()
         | Some c -> charstream.push c
@@ -258,6 +258,7 @@ let _ =
   let common_output = ref None in
   let common_output_filename = ref "" in
   let at_least_one_file_processed = ref false in
+  let files_to_process = ref [] in
   let process_one_file filename =
     if not(Sys.file_exists filename) then
       begin
@@ -291,6 +292,7 @@ let _ =
         at_least_one_file_processed := true
       end
   in
+  let register_file f = files_to_process := f :: !files_to_process in
   try
     if l > 1 then
       begin
@@ -321,12 +323,12 @@ let _ =
             "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
             "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
             "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
-            "--", Arg.Rest(process_one_file), " If you use this parameter, all remaining arguments are considered as file names.";
+            "--", Arg.Rest(register_file), " If you use this parameter, all remaining arguments are considered as file names.";
           ]
         in
         Arg.parse
           aligned
-          process_one_file
+          register_file
           ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
                   ~ If a file name doesn't have the .mpp extension, it will output on stdout.
                     ~ If you don't give any file name, it will use standard input (/dev/stdin).
@@ -335,7 +337,8 @@ let _ =
 ~ When an options exists to enable a feature, it means that it is disabled by default.
 ~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
-List of options:")
+List of options:");
+        List.iter process_one_file (List.rev !files_to_process);
       end;
     if not !at_least_one_file_processed then
       begin
