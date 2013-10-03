@@ -330,12 +330,12 @@ let _ =
           aligned
           register_file
           ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
-~ If a file name doesn't have the .mpp extension, it will output on stdout.
-~ If you don't give any file name, it will use standard input (/dev/stdin).
+~ By default, MPP outputs on stdout. You can specify a file to output to, using the -o option (if you use it multiple times, only the last one is considered).
+~ MPP reads /dev/stdin unless you give it one or several files to read.
 ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
-~ This software does not care about characters encoding, hence it performs no conversion at all.
-~ When an options exists to enable a feature, it means that it is disabled by default.
-~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
+~ MPP works on ASCII and strict supersets of ASCII such as UTF8, it performs no conversion.
+~ When an option exists to enable a feature, it means that the feature is disabled by default.
+~ Please feel free to email pw374@cl.cam.ac.uk if you meet any bug.
 
 List of options:");
         List.iter process_one_file (List.rev !files_to_process);
