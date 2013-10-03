@@ -22,5 +22,5 @@ frag.opt:../../mpp_charset.cmx ../../mpp_charstream.cmx ../../mpp_out.cmx libmpp
 
 
 install:frag.opt
-	cp frag.opt ${PREFIX}/bin/
+	cp frag.opt ${PREFIX}/bin/frag
 
