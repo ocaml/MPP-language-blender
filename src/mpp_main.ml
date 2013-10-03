@@ -336,6 +336,7 @@ let _ =
 ~ MPP works on ASCII and strict supersets of ASCII such as UTF8, it performs no conversion.
 ~ When an option exists to enable a feature, it means that the feature is disabled by default.
 ~ MPP reads all its command-line arguments and interprets them sequentially before processing any file.
+~ For foreign blocks, naming is optional, nesting is not possible.
 ~ Please feel free to email pw374@cl.cam.ac.uk if you meet any bug.
 
 List of options:");
