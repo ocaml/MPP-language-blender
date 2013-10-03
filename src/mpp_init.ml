@@ -52,7 +52,7 @@ let foreign_blocks = [
   { name = "ocaml";
     command = "ocaml";
     suffix = ".ml";
-    print = (fun s -> Printf.sprintf " let _ = print_string \"%s\"\n" s);
+    print = (fun s -> if s <> "" then Printf.sprintf " let _ = print_string \"%s\"\n" s else "");
     string_escape = String.escaped;
     char_escape = Char.escaped;
     force_line_number = (
