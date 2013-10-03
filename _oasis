@@ -1,0 +1,29 @@
+# -*-conf-*-
+OASISFormat: 0.3
+Name:        mpp
+Version:     0.1.0
+Synopsis:    A meta preprocessor.
+Description: A meta preprocessor that works very well with OCaml.
+Authors:     Philippe Wang <philippe.wang@gmail.com>
+Maintainers: Philippe Wang <philippe.wang@gmail.com>
+License:     ISC
+Homepage:    https://github.com/pw374/MPP-language-blender
+Plugins:     META (0.3), StdFiles (0.3)
+
+Library "mpp"
+  Path:         src
+  BuildTools:   ocamlbuild
+  Modules:      Mpp_charset, Mpp_charstream, Mpp_out, Mpp_stringmap, Mpp_actions, Mpp_init, Mpp_core, Mpp_load
+
+Executable "mpp"
+  Path:         src
+  BuildTools:   ocamlbuild
+  MainIs:       mpp_main.ml
+  BuildDepends: mpp
+  CompiledObject: best
+
+SourceRepository master
+  Type:       git
+  Location:   https://github.com/pw374/MPP-language-blender.git
+  Browser:    https://github.com/pw374/MPP-language-blender
+

@@ -1,8 +1,8 @@
 (***********************************************************************)
 (* Meta Pre Processor, a language blender                              *)
 (* (c) 2013 by Philippe Wang <philippe.wang@cl.cam.ac.uk>              *)
-(* Licence : CeCILL-B                                                  *)
-(* http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html         *)
+(* Licence : ISC                                                       *)
+(* http://www.isc.org/downloads/software-support-policy/isc-license/   *)
 (***********************************************************************)
 
 type t = 
@@ -26,7 +26,7 @@ let output_char o c = match o with
   | Out_channel oc -> Pervasives.output_char oc c
 
 let printf o fmt =
-  (* This printf function is provided by Benoît Vaugon *)
+  (* This printf function is provided by BenoÃ®t Vaugon *)
   let contains_flush fmt =
     let s = string_of_format fmt in
     let n = String.length s in
