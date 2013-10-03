@@ -330,10 +330,10 @@ let _ =
           aligned
           register_file
           ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
-                  ~ If a file name doesn't have the .mpp extension, it will output on stdout.
-                    ~ If you don't give any file name, it will use standard input (/dev/stdin).
-                      ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
-                        ~ This software does not care about characters encoding, hence it performs no conversion at all.
+~ If a file name doesn't have the .mpp extension, it will output on stdout.
+~ If you don't give any file name, it will use standard input (/dev/stdin).
+~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
+~ This software does not care about characters encoding, hence it performs no conversion at all.
 ~ When an options exists to enable a feature, it means that it is disabled by default.
 ~ Please feel free to email pw374@cl.cam.ac.uk if you find any bug.
 
