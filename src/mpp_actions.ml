@@ -389,7 +389,7 @@ let exec (nesting:bool) (last_cond:bool option ref) (action_name:string) (argume
                   !main_process charstream (Out.Buffer buff2);
                   charstream_of_string ~location:x (Buffer.contents buff2)
               in
-                if !debug then Printf.eprintf "W???<%s><%s>\n%!" (String.escaped (string_of_charstream ~keepcs:true arguments)) (String.escaped (string_of_charstream ~keepcs:true charstream));
+                if !debug then Printf.eprintf "action<%s><%s><%s>\n%!" (action_name) (String.escaped (string_of_charstream ~keepcs:true arguments)) (String.escaped (string_of_charstream ~keepcs:true charstream));
                 apply_builtin action_name (charstream.where()) last_cond nesting arguments charstream out
             end
         end
