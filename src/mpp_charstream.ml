@@ -97,10 +97,31 @@ let charstream_peek ?(n=1) charstream =
 
 let null_charstream =
   let c = ref [] in
-  { take = (fun() -> match !c with [] -> None | (e::tl) -> c := tl; Some e);
-    push = (fun e -> c := e :: !c);
-    insert = (fun cs -> failwith "Mpp_charstream.insert for null_charstream");
-    where = (fun () -> "", -1, -1)
+  let cs = ref [] in
+  let insert e = cs := e :: !cs in
+  let rec take () = match !cs with
+    | x::tl -> 
+        begin match x.take() with
+          | Some _ as r -> r
+          | None -> cs := tl; take ()
+        end
+    | [] ->
+        match !c with
+        | [] -> None
+        | e :: tl -> c := tl; Some e
+  in
+  let push e = match !cs with
+    | [] -> c := e :: !c
+    | x :: _ -> x.push e
+  in
+  let where () = match !cs with
+    | [] -> "", -1, -1
+    | x :: _ -> x.where ()
+  in
+  { take = take;
+    push = push;
+    insert = insert;
+    where = where;
   }
 
 let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
