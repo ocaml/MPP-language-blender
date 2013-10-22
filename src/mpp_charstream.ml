@@ -95,6 +95,14 @@ let charstream_peek ?(n=1) charstream =
       done;
       res
 
+let null_charstream =
+  let c = ref [] in
+  { take = (fun() -> match !c with [] -> None | (e::tl) -> c := tl; Some e);
+    push = (fun e -> c := e :: !c);
+    insert = (fun cs -> failwith "Mpp_charstream.insert for null_charstream");
+    where = (fun () -> "", -1, -1)
+  }
+
 let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   (* Eventually, we might want to get rid of the "double definition". *)
   let buffer : char list ref = ref [] in
@@ -161,7 +169,7 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   let rec push c =
     match !csl with
       | [] ->
-          csl := [charstream_of_inchannel "/dev/null" (open_in "/dev/null")];
+          csl := [null_charstream];
           push c
       | e::tl ->
           begin
