@@ -1,7 +1,7 @@
 # -*-conf-*-
 OASISFormat: 0.3
 Name:        mpp
-Version:     0.1.1
+Version:     0.1.2
 Synopsis:    A meta preprocessor.
 Description: A meta preprocessor that works very well with OCaml.
 Authors:     Philippe Wang <philippe.wang@gmail.com>
