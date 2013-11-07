@@ -230,21 +230,20 @@ end
 
 let last_cmd = ref 0
 
-let command arg charstream (out:Out.t) =
-  let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
+let command ?temp_dir arg charstream (out:Out.t) =
+  let tmp = Filename.temp_file ?temp_dir "mpp_command" "" in
   let otmp = open_out tmp in
-  let tmp2 = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp2" "plop" in
   output_charstream otmp charstream;
   close_out otmp;
-  let cmd = sprintf "(cat %s | %s) > %s"  tmp (string_of_charstream arg) tmp2 in
-  if !debug then eprintf "command <%s>\n%!" cmd;
-  let ec = Sys.command cmd in
+  let tmp2 = Filename.temp_file ?temp_dir "mpp_command" "" in
+  let cmd = sprintf "(cat %s | %s) > %s" tmp (string_of_charstream arg) tmp2 in
+  if !debug then eprintf "command %s\n%!" cmd;
+  last_cmd := Sys.command ("bash -c " ^ (Filename.quote cmd));
   Out.cat out tmp2;
   Sys.remove tmp;
   Sys.remove tmp2;
-  last_cmd := ec;
   Out.flush out;
-  ec
+  !last_cmd
 
 let ifcmd last_cond nesting arg charstream out =
   if !debug then
