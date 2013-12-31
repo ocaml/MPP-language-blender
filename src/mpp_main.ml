@@ -350,6 +350,6 @@ List of options:");
   with e ->
     let bt = Printexc.get_backtrace () in
     if debug then Printf.eprintf "%s\n%!" bt;
-    if debug then Printf.eprintf "Exception raised: <%s>\n%!" (Printexc.to_string e);
-    Pervasives.exit 1
+    Printf.eprintf "Error: exception <%s>\n%!" (Printexc.to_string e);    
+    Pervasives.exit 3
 
