@@ -79,7 +79,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
             parse_error
               ~msg:"No characters left to read right after an opening! (F2)" 
               (charstream.where());
-            exit 1
+            Pervasives.exit 1
         | Some (' ' | '\t') ->
             ""
         | Some c ->
@@ -113,7 +113,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
             parse_error
               ~msg:"No characters left to read right after an opening! (2)" 
               (charstream.where());
-            exit 1
+            Pervasives.exit 1
         | Some (' ' | '\t') ->
             None
         | Some c ->
@@ -183,14 +183,14 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened action block." (charstream.where());
-        exit 1
+        Pervasives.exit 1
       end
 
   and close_foreign_token_action() = 
     if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened foreign block." (charstream.where());
-        exit 1
+        Pervasives.exit 1
       end
 
   (* Just ignore what has to be ignored. *)
@@ -209,7 +209,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
     if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened comments block." (charstream.where());
-        exit 1
+        Pervasives.exit 1
       end
   in 
     loop (ref None);
@@ -264,7 +264,7 @@ let _ =
       begin
         if not !continue then
           (Printf.eprintf "Error: input file <%s> does not exist, I'm stopping right here.\n%!" filename;
-           exit 4)
+           Pervasives.exit 2)
       end
     else (* filename does exist, so it's fine. *)
     if !common_output_filename <> ""
@@ -305,7 +305,7 @@ let _ =
             "-iee", Arg.Set(Mpp_actions.ignore_exec_error), " Ignore errors that occur when executing external commands.";
             "-ioc", Arg.Set(ignore_orphan_closing_tokens), " Ignore orphan closing tokens.";
             "-its", Arg.Set(ignore_trailing_spaces), " Ignore trailing spaces (i.e. spaces at end of block and end of command line).";
-            "-b", Arg.Unit(fun () -> Mpp_actions.list_builtins (Out.Out_channel stdout); exit 0), " List builtins.";
+            "-b", Arg.Unit(fun () -> Mpp_actions.list_builtins (Out.Out_channel stdout); Pervasives.exit 0), " List builtins.";
             "-so", Arg.Set_string(open_token), Printf.sprintf "token Set open token. Default is %s." !open_token;
             "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
             "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
