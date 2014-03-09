@@ -15,7 +15,7 @@ MPP is parametric because you can change the tokens that are used to declare spe
 
 MPP is meta because it is designed to allow you to build a simple preprocessor for the language of your choice.
 
-A list of built-in commands may be obtained by using the -builtins option.
+A list of built-in commands may be obtained by using the -b option.
 
 Built-in commands can be accessed directly in action blocks by their names. If you want to execute a command, you may use the "cmd" built-in, or you can use a dash (cf. the following examples).
 Currently (at the time this is being written), there is one kind of action block. 
