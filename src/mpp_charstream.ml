@@ -214,24 +214,66 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
           end;
           e.push c
   in
-    { take ; push ; insert ; where }
+  { take = take;
+    push = push;
+    insert = insert;
+    where = where;
+  }
 
-let charstream_of_string  ?(location:location=("<anon-string>",0,0)) (s:string) : charstream =
-  (*It's too inconvenient to keep an optimal complete version of this
-    function, so I chose to rely on [charstream_of_inchannel], **for
-    now**.  Also, it is not good to write the data in a
-    file... especially because I never delete the file, so it is not
-    safe at all. If I keep relying on [charstream_of_inchannel], then
-    I might use Unix.pipe and perhaps threads as well because writing
-    to a file descriptor is a blocking operation, however threads are
-    not convinient at all.  *)
-  let tmp = Filename.temp_file (* ~temp_dir:"/tmp" *) "tmp" "plop" in
-  let () = at_exit (fun () -> Sys.remove tmp) in
-  let octmp = open_out tmp in
-  let () = output_string octmp s in
-  let () = close_out octmp in
-  let name, line, column = location in
-    charstream_of_inchannel name ~line:line ~column:column (open_in tmp)
+
+let charstream_of_string ?(location:location=("<anon-string>",0,0)) (s:string) : charstream =
+  let i = ref 0 in
+  let location = ref location in
+  let t = ref
+      (fun() ->
+         if !i >= String.length s then None
+         else
+           begin match s.[!i] with
+             | '\n' as c ->
+               location :=
+                 (match !location with
+                  | fn, line, col -> fn, line+1, 0);
+               incr i;
+               Some c
+             | c ->
+               location :=
+                 (match !location with
+                  | fn, line, col -> fn, line, col+1);
+               incr i;
+               Some c
+           end)
+  in
+  let streams = ref [] in
+  let stack = ref [] in
+  let push c = match !streams with
+    | [] -> stack := c :: !stack
+    | s::_ -> s.push c
+  in
+  let rec take () = match !streams with
+    | s::tl ->
+      begin match s.take() with
+        | None -> streams := tl; take()
+        | Some _ as r -> r
+      end
+    | [] ->
+      begin match !stack with
+      | [] ->
+        (match !t() with None -> t := (fun () -> None); None | r -> r)
+      | c::tl ->
+        stack := tl;
+        Some c
+      end
+  in
+  let insert cs = streams := cs :: !streams in
+  let where () = match !streams with
+    | [] -> !location
+    | cs::_ -> cs.where()
+  in
+  { take = take;
+    push = push;
+    insert = insert;
+    where = where;
+  }
 
 
 let match_token token charstream =
