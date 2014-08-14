@@ -317,7 +317,7 @@ let builtins : action_set ref =
   let ifcmd = ifcmd in
   let ifdef = Variable.ifdef in
   let ifndef = Variable.ifndef in
-(*   let elzeifdef = Variable.elzeifdef in *)
+  let elzeifdef = Variable.elzeifdef in
   let elze = Variable.elze in
   let error _ _ s cs _ =
     parse_error
@@ -338,7 +338,7 @@ let builtins : action_set ref =
         "error", error, "Stops MPP.";
         "ifndef", ifndef, "If the argument is not a defined variable, then inputs the rest, else does nothing.";
         "else", elze, "If the previous test was not satisfied, then outputs its arguments";
-        (* "elseifdef", elzeifdef, "If the previous test was not satisfied and the variable exists, then outputs the rest."; *)
+        "elseifdef", elzeifdef, "If the previous test was not satisfied and the variable exists, then outputs the rest.";
         "set", set, "Set the variable to the rest. Related: get, tryget, unset, unsetall.";
         "get", get, "Get the value of a variable, and if it does not exist, MPP stops. Related: set, tryget, unset, unsetall.";
         "unset", unset, "Unset a variable. Related: tryget, get, tryget, unsetall.";
