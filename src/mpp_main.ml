@@ -158,7 +158,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       eat space_chars blockcharstream;
       read_until_one_of
         ~failsafe:true
-        space_chars
+        blank_chars
         (* ~exclude:newline_chars *)
         ~expect:"Zero or more spaces, and then an action name."
         blockcharstream
