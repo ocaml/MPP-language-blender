@@ -54,6 +54,7 @@ let output_charstream o cs =
     | Out_channel o -> Pervasives.output_string o (Mpp_charstream.string_of_charstream ~keepcs:true cs)
 
 let cat (out:t) filename =
+  let filename = String.trim filename in
   try
     let i = open_in filename in
       try while true do

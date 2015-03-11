@@ -223,7 +223,7 @@ let init() =
        preprocess function.  *)
     let builtin__input =
       (fun __last_cond _nesting arg cs out ->
-        let arg = string_of_charstream arg in
+        let arg = String.trim (string_of_charstream arg) in
         try
           let x = open_in arg in
             cs.insert (charstream_of_inchannel arg x);
