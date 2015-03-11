@@ -7,7 +7,7 @@ Description: MPP is a meta processor that is meant to bring any programming lang
 Authors:     Philippe Wang <philippe.wang@gmail.com>
 Maintainers: Philippe Wang <philippe.wang@gmail.com>
 License:     ISC
-Homepage:    https://github.com/pw374/MPP-language-blender
+Homepage:    https://github.com/ocaml/MPP-language-blender
 Plugins:     META (0.3), StdFiles (0.3)
 
 Library "mpp"
@@ -24,6 +24,6 @@ Executable "mpp"
 
 SourceRepository master
   Type:       git
-  Location:   https://github.com/pw374/MPP-language-blender.git
-  Browser:    https://github.com/pw374/MPP-language-blender
+  Location:   https://github.com/ocaml/MPP-language-blender.git
+  Browser:    https://github.com/ocaml/MPP-language-blender
 

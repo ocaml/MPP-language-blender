@@ -53,14 +53,12 @@ let output_charstream o cs =
     | Buffer buff -> Buffer.add_string buff (Mpp_charstream.string_of_charstream ~keepcs:true cs)
     | Out_channel o -> Pervasives.output_string o (Mpp_charstream.string_of_charstream ~keepcs:true cs)
 
-
 let cat (out:t) filename =
-  if Sys.file_exists filename then
+  let filename = String.trim filename in
+  try
     let i = open_in filename in
       try while true do
         output_char out (input_char i)
       done with End_of_file -> ()
-  else
-    Printf.eprintf
-      "builtin cat error: file <%s> doesn't exist.\n%!"
-      filename
+  with Sys_error s ->
+    Printf.eprintf "\"cat %s\" failed: %s\n" filename s
