@@ -224,10 +224,12 @@ let init() =
     let builtin__input =
       (fun __last_cond _nesting arg cs out ->
         let arg = string_of_charstream arg in
-        let x = open_in arg in
-          cs.insert (charstream_of_inchannel arg x);
-          preprocess cs out;
-          close_in x
+        try
+          let x = open_in arg in
+            cs.insert (charstream_of_inchannel arg x);
+            preprocess cs out;
+            close_in x
+        with Sys_error s -> Printf.eprintf "\"input %s\" failed: %s\n" arg s
       )
     in
       Mpp_actions.register "input" builtin__input "Input and process a file.";
