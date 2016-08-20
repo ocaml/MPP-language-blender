@@ -22,7 +22,7 @@ module Out = Mpp_out
 
 let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
   let default_buffer = Buffer.create 4242 in
-    
+
   (* entry point *)
   let rec loop (last_cond:bool option ref) : unit =
     begin
@@ -77,7 +77,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       match charstream.take() with
         | None ->
             parse_error
-              ~msg:"No characters left to read right after an opening! (F2)" 
+              ~msg:"No characters left to read right after an opening! (F2)"
               (charstream.where());
             Pervasives.exit 1
         | Some (' ' | '\t') ->
@@ -106,7 +106,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
   and open_token_action last_cond ~nesting =
     flush_default();
     let () =
-      if debug then 
+      if debug then
         Printf.eprintf "peek<%s>\n%!"
           (String.escaped (charstream_peek ~n:20 charstream))
     in
@@ -114,7 +114,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       match charstream.take() with
         | None ->
             parse_error
-              ~msg:"No characters left to read right after an opening! (2)" 
+              ~msg:"No characters left to read right after an opening! (2)"
               (charstream.where());
             Pervasives.exit 1
         | Some (' ' | '\t') ->
@@ -138,8 +138,8 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | None ->
             read_until_word charstream (if nesting then !close_nesting_token else !close_token)
     in
-    let () = 
-      if !save_newlines then 
+    let () =
+      if !save_newlines then
         begin match charstream.take() with
           | Some '\n' -> ()
           | Some c -> charstream.push c
@@ -171,7 +171,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | Some c ->
             blockcharstream.push c;
             let tmp = read_until_one_of ~failsafe:true ~push_back:true newline_chars blockcharstream in
-              charstream_of_string 
+              charstream_of_string
                 (if !ignore_trailing_spaces then
                   delete_trailing_spaces tmp
                   else
@@ -189,7 +189,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         Pervasives.exit 1
       end
 
-  and close_foreign_token_action() = 
+  and close_foreign_token_action() =
     if not (!ignore_orphan_closing_tokens) then
       begin
         parse_error ~msg:"Closing unopened foreign block." (charstream.where());
@@ -214,7 +214,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         parse_error ~msg:"Closing unopened comments block." (charstream.where());
         Pervasives.exit 1
       end
-  in 
+  in
     loop (ref None);
     flush_default()
 
@@ -321,11 +321,11 @@ let _ =
             "-scc", Arg.Set_string(close_comments_token), Printf.sprintf "token Set close comments token. Default is %s." !close_comments_token;
             "-sec", Arg.Set_string(endline_comments_token), Printf.sprintf "token Set endline comments token. Default is %s."  !endline_comments_token;
             "-set", Arg.String(fun s ->
-                let cs = charstream_of_string s in 
+                let cs = charstream_of_string s in
                 let vn = read_until_one_of ~failsafe:true (Mpp_charset.of_list ['='; ' ';'\t']) cs in
                 Mpp_actions.Variable.set (charstream_of_string (vn ^ " " ^ string_of_charstream cs)) (charstream_of_string "") stdout),
             "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
-            "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file. (Does not work yet.)";
+            "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file.";
             "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
             "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
             "--", Arg.Rest(register_file), " If you use this parameter, all remaining arguments are considered as file names.";
@@ -355,6 +355,6 @@ List of options:");
   with e ->
     let bt = Printexc.get_backtrace () in
     if debug then Printf.eprintf "%s\n%!" bt;
-    Printf.eprintf "Error: exception <%s>\n%!" (Printexc.to_string e);    
+    Printf.eprintf "Error: exception <%s>\n%!" (Printexc.to_string e);
     Pervasives.exit 3
 
