@@ -38,3 +38,11 @@ If you don't like the default tokens (`{<` and `>}`), you may redefine them, eit
 You can use any string you want (except the empty string, because, obviously, it wouldn't make sense at all).
 On the fly, if you use MPP's default options, you may write `(( sos <<<))` and `(( scs >>>))` to do the same thing as above.
 You may redefine on the fly any token, but beware: if what you ask is nonsense, don't expect any senseful output.
+
+
+If you really need to write expressions, you might want to do that:
+```
+Here are the numbers from 1 to 8.
+{< ;; for i = 1 to 8 do Printf.printf "%d\n" i done >}
+```
+as the `;;` would end the preceding phrase, allowing you to start a top-level expression.
