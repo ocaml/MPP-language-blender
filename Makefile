@@ -28,7 +28,7 @@ doc install uninstall reinstall test: setup.log
 
 
 # Make a tarball
-.PHONY: dist tar
+.PHONY: dist tar opam
 dist tar: $(DISTFILES)
 	mkdir $(PKGNAME)-$(PKGVERSION)
 	cp --parents -r $(DISTFILES) $(PKGNAME)-$(PKGVERSION)/
