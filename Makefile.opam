@@ -1,0 +1,18 @@
+build:
+	cd src && make mpp && cp mpp ..
+
+install:
+#	mkdir -p ${PREFIX}/lib/mpp/
+#	ocamlfind install -destdir ${PREFIX}/lib mpp $+ META
+#	cp $+ ${PREFIX}/lib/mpp/
+	cp mpp ${PREFIX}/bin/
+
+uninstall:
+#	ocamlfind remove -destdir ${PREFIX}/lib mpp
+#	rm -f ${PREFIX}/lib/mpp/mpp.cm{a,xa}
+#	-rmdir ${PREFIX}/lib/mpp
+	rm -f ${PREFIX}/bin/mpp
+
+include Makefile.prefix
+
+
