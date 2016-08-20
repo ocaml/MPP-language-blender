@@ -73,6 +73,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
 
   and open_foreign_token_action last_cond =
     flush_default();
+    let (f, l, _) = charstream.where() in
     let block_name = (* block_name: syntactic "tool" *)
       match charstream.take() with
         | None ->
@@ -97,6 +98,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | Some c -> charstream.push c
         | None -> ()
       end;
+    Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l);
     Out.output_string out x;
     let (f, l, _) = charstream.where() in
     Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l)
