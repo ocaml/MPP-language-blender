@@ -97,7 +97,10 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | Some c -> charstream.push c
         | None -> ()
       end;
-    Out.output_string out x
+    Out.output_string out x;
+    let (f, l, _) = charstream.where() in
+    Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l)
+    (* TODO: make locations optional *)
 
   (* new block *)
   and open_token_action last_cond ~nesting =
