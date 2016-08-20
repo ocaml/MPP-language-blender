@@ -28,7 +28,7 @@ let close_foreign_token = ref ">}"
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
-(* [space_chars] is like the IFS Bash special variable, 
+(* [space_chars] is like the IFS Bash special variable,
    but this way of using it has not been tested yet. *)
 let space_chars = Mpp_charset.of_list [' '; '\t']
 
@@ -46,7 +46,44 @@ type foreign_block_description = {
   string_escape : string -> string;
   force_line_number : ?filename:string -> int -> string;
 }
-    
+
+
+let bash_string_escape s =
+  let b = Buffer.create (String.length s * 2) in
+  for i = 0 to String.length s - 1 do
+    match s.[i] with
+    | '$' | '\\' | ' ' | '\t' | '\'' | '\"' | '`' | '&'
+    | '(' | ')' | '{' | '}' | '[' | ']' as c ->
+      Buffer.add_char b '\\';
+      Buffer.add_char b c
+    | c ->
+      Buffer.add_char b c
+  done;
+  Buffer.contents b
+
+let php_string_escape s =
+  let b = Buffer.create (String.length s * 2) in
+  for i = 0 to String.length s - 1 do
+    match s.[i] with
+    | '$' | '\"' | '\\' as c ->
+      Buffer.add_char b '\\';
+      Buffer.add_char b c
+    | c ->
+      Buffer.add_char b c
+  done;
+  Buffer.contents b
+
+let perl_string_escape s =
+  let b = Buffer.create (String.length s * 2) in
+  for i = 0 to String.length s - 1 do
+    match s.[i] with
+    | '$' | '\"' | '\\' | '@' as c ->
+      Buffer.add_char b '\\';
+      Buffer.add_char b c
+    | c ->
+      Buffer.add_char b c
+  done;
+  Buffer.contents b
 
 let foreign_blocks = [
   { name = "ocaml";
@@ -56,16 +93,58 @@ let foreign_blocks = [
     string_escape = String.escaped;
     char_escape = Char.escaped;
     force_line_number = (
-      fun ?(filename="") n ->
-        if filename = "" then
-          Printf.sprintf "\n# %d\n" n
-        else
+      fun ?filename n ->
+        match filename with
+        | None -> Printf.sprintf "\n# %d\n" n
+        | Some filename ->
+          Printf.sprintf "\n# %d \"%s\"\n" n filename
+    );
+  };
+  { name = "bash";
+    command = "bash";
+    suffix = ".bash";
+    print = (fun s -> if s <> "" then Printf.sprintf "echo %s" s else "");
+    string_escape = bash_string_escape;
+    char_escape = (fun c -> bash_string_escape (String.make 1 c));
+    force_line_number = (
+      fun ?filename n ->
+        match filename with
+        | None -> Printf.sprintf "\n# %d\n" n
+        | Some filename ->
+          Printf.sprintf "\n# %d \"%s\"\n" n filename
+    );
+  };
+  { name = "php";
+    command = "php";
+    suffix = ".php";
+    print = (fun s -> if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
+    string_escape = php_string_escape;
+    char_escape = (fun c -> php_string_escape (String.make 1 c));
+    force_line_number = (
+      fun ?filename n ->
+        match filename with
+        | None -> Printf.sprintf "\n# %d\n" n
+        | Some filename ->
+          Printf.sprintf "\n# %d \"%s\"\n" n filename
+    );
+  };
+  { name = "perl";
+    command = "perl";
+    suffix = ".pl";
+    print = (fun s -> if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
+    string_escape = perl_string_escape;
+    char_escape = (fun c -> perl_string_escape (String.make 1 c));
+    force_line_number = (
+      fun ?filename n ->
+        match filename with
+        | None -> Printf.sprintf "\n# %d\n" n
+        | Some filename ->
           Printf.sprintf "\n# %d \"%s\"\n" n filename
     );
   };
 ]
 
-let default_foreign_block = 
+let default_foreign_block =
   { name = "";
     command = "";
     suffix = "";
@@ -81,13 +160,13 @@ let set_foreign s =
   let r = List.find (fun { name ; _ } -> name = s) foreign_blocks in
   foreign := r
 
-let list_foreign () = 
+let list_foreign () =
   Printf.printf "List of foreign block languages available:\n";
-  List.iter 
-    (fun {name; _} -> Printf.printf "%s\n" name) 
+  List.iter
+    (fun {name; _} -> Printf.printf "%s\n" name)
     foreign_blocks;
   Pervasives.exit 0
 
-(* PROPAGATION *)  
+(* PROPAGATION *)
 let () = Mpp_actions.space_chars := space_chars
 let () = Mpp_actions.blank_chars := blank_chars
