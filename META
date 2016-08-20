@@ -1,4 +1,4 @@
-version = "0.1.7"
+version = "dev"
 description = "MPP: meta preprocessor and language blender"
 archive(byte) = "mpp.cma"
 archive(native) = "mpp.cmxa"
