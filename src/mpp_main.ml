@@ -9,7 +9,7 @@ open Mpp_charstream
 open Mpp_init
 
 let debug =
-  try ignore(Sys.getenv "DEBUG") ; true with _ -> false
+  try ignore(Sys.getenv "MPP_DEBUG") ; true with _ -> false
 
 let () = Mpp_charstream.debug := debug
 let () = Mpp_actions.debug := debug
