@@ -329,6 +329,8 @@ let _ =
             "x=s Sets variable x to s (if you know how, you can use a space instead of =).";
             "-l", Arg.String(Mpp_init.set_foreign), "lang Set MPP to convert the file into a lang file.";
             "-ll", Arg.Unit(Mpp_init.list_foreign), " List available foreign languages. Advanced use: to add one, cf. the file mpp_init.ml";
+            "-t", Arg.String(Mpp_init.set_target_language_location_handler), "lang Set MPP to keep source locations according to lang conventions.";
+            "-tl", Arg.Unit(Mpp_init.list_target), " List available target language location handler. Advanced use: to add one, cf. the file mpp_init.ml";
             "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
             "--", Arg.Rest(register_file), " If you use this parameter, all remaining arguments are considered as file names.";
           ]

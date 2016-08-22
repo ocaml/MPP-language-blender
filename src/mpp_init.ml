@@ -26,6 +26,37 @@ let close_comments_token = ref "*/"
 let open_foreign_token = ref "{<"
 let close_foreign_token = ref ">}"
 
+let target_language_location_handler = ref (fun ?filename line -> "")
+
+let cpp_location_handler ?filename line =
+  match filename with
+  | Some filename ->
+     Printf.sprintf "\n# %d %S\n" line filename
+  | None ->
+     Printf.sprintf "\n# %d\n" line
+
+let target_language_location_handlers = [
+  ("cpp", cpp_location_handler);
+  ("ocaml", cpp_location_handler);
+]
+
+let list_target () =
+  Printf.printf "List of target language handlers available:\n";
+  List.iter
+    (fun (name,  _) -> Printf.printf "%s\n" name)
+    target_language_location_handlers;
+  Pervasives.exit 0
+
+
+let set_target_language_location_handler h =
+  match List.assoc h target_language_location_handlers with
+  | h -> target_language_location_handler := h
+  | exception Not_found ->
+      Printf.eprintf
+        "MPP: Error: Target language location handler <%s> is not available.\n%!"
+        h;
+      Pervasives.exit 1
+
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
 (* [space_chars] is like the IFS Bash special variable,
@@ -89,15 +120,23 @@ let foreign_blocks = [
   { name = "ocaml";
     command = "ocaml";
     suffix = ".ml";
-    print = (fun s -> if s <> "" then Printf.sprintf " let _ = print_string \"%s\"\n" s else "");
+    print =
+      (fun s ->
+       if s <> "" then
+         Printf.sprintf " let _ = print_string \"%s\"\n" s
+       else "");
     string_escape = String.escaped;
     char_escape = Char.escaped;
     force_line_number = (
       fun ?filename n ->
-        match filename with
-        | None -> Printf.sprintf "\n# %d\n" n
-        | Some filename ->
-          Printf.sprintf "\n# %d \"%s\"\n" n filename
+      (match filename with
+       | None -> Printf.sprintf "\n# %d\n" n
+       | Some filename ->
+          Printf.sprintf "\n# %d \"%s\"\n" n filename)
+      ^
+        (match !target_language_location_handler ?filename n with
+         | "" -> ""
+         | l -> Printf.sprintf "let _ = print_string %S" l)
     );
   };
   { name = "bash";
@@ -117,7 +156,9 @@ let foreign_blocks = [
   { name = "php";
     command = "php";
     suffix = ".php";
-    print = (fun s -> if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
+    print =
+      (fun s ->
+       if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
     string_escape = php_string_escape;
     char_escape = (fun c -> php_string_escape (String.make 1 c));
     force_line_number = (
@@ -131,7 +172,9 @@ let foreign_blocks = [
   { name = "perl";
     command = "perl";
     suffix = ".pl";
-    print = (fun s -> if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
+    print =
+      (fun s ->
+       if s <> "" then Printf.sprintf "echo \"%s\n\";" s else "");
     string_escape = perl_string_escape;
     char_escape = (fun c -> perl_string_escape (String.make 1 c));
     force_line_number = (
