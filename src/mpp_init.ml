@@ -49,13 +49,14 @@ let list_target () =
 
 
 let set_target_language_location_handler h =
-  match List.assoc h target_language_location_handlers with
-  | h -> target_language_location_handler := h
-  | exception Not_found ->
-      Printf.eprintf
-        "MPP: Error: Target language location handler <%s> is not available.\n%!"
-        h;
-      Pervasives.exit 1
+  try
+    match List.assoc h target_language_location_handlers with
+    | h -> target_language_location_handler := h
+  with Not_found ->
+    Printf.eprintf
+      "MPP: Error: Target language location handler <%s> is not available.\n%!"
+      h;
+    Pervasives.exit 1
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
