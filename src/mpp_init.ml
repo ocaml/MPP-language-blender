@@ -24,6 +24,7 @@ let open_comments_token = ref "/*"
 let close_comments_token = ref "*/"
 
 let open_foreign_token = ref "{<"
+let open_foreign_token_no_location = ref "{<!"
 let close_foreign_token = ref ">}"
 
 let target_language_location_handler = ref (fun ?filename line -> "")

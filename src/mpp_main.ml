@@ -38,8 +38,11 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
       else if match_token !open_comments_token charstream then
         open_comments_token_action()
 
+      else if match_token !open_foreign_token_no_location charstream then
+        open_foreign_token_action ~no_target:true
+
       else if match_token !open_foreign_token charstream then
-        open_foreign_token_action()
+        open_foreign_token_action ~no_target:false
 
       else if match_token !close_foreign_token charstream then
         close_foreign_token_action()
@@ -71,7 +74,7 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
           (!Mpp_init.foreign.string_escape (String.make 1 c));
         loop last_cond
 
-  and open_foreign_token_action last_cond =
+  and open_foreign_token_action ~no_target =
     flush_default();
     let (f, l, _) = charstream.where() in
     let block_name = (* block_name: syntactic "tool" *)
@@ -98,10 +101,12 @@ let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) o
         | Some c -> charstream.push c
         | None -> ()
       end;
-    Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l);
+    if not no_target then
+      Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l);
     Out.output_string out x;
-    let (f, l, _) = charstream.where() in
-    Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l)
+    if not no_target then
+      let (f, l, _) = charstream.where() in
+      Out.output_string out (!Mpp_init.foreign.force_line_number ~filename:f l)
     (* TODO: make locations optional *)
 
   (* new block *)
@@ -317,6 +322,8 @@ let _ =
             "-sc", Arg.Set_string(close_token), Printf.sprintf "token Set close token. Default is %s." !close_token;
             "-son", Arg.Set_string(open_nesting_token), Printf.sprintf "token Set open token for blocks which allow nesting. Default is %s." !open_nesting_token;
             "-scn", Arg.Set_string(close_nesting_token), Printf.sprintf "token Set close token for blocks which allow nesting. Default is %s." !close_nesting_token;
+            "-sos-noloc", Arg.Set_string(open_foreign_token_no_location),
+            Printf.sprintf "token Set open foreign token with no location printing (same use as -sos if -t isn't set). Default is %s." !open_foreign_token_no_location;
             "-sos", Arg.Set_string(open_foreign_token), Printf.sprintf "token Set open foreign token. Default is %s." !open_foreign_token;
             "-scs", Arg.Set_string(close_foreign_token), Printf.sprintf "token Set close foreign token. Default is %s." !close_foreign_token;
             "-soc", Arg.Set_string(open_comments_token), Printf.sprintf "token Set open comments token. Default is %s." !open_comments_token;
@@ -346,7 +353,7 @@ let _ =
 ~ When an option exists to enable a feature, it means that the feature is disabled by default.
 ~ MPP reads all its command-line arguments and interprets them sequentially before processing any file.
 ~ For foreign blocks, naming is optional, nesting is not possible.
-~ Please feel free to email pw374@cl.cam.ac.uk if you meet any bug.
+~ Please report bugs: https://github.com/ocaml/MPP-language-blender/issues
 
 List of options:");
         List.iter process_one_file (List.rev !files_to_process);
