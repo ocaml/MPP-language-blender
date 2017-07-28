@@ -5,7 +5,7 @@
 (* http://www.isc.org/downloads/software-support-policy/isc-license/   *)
 (***********************************************************************)
 
-type t = 
+type t =
     | Buffer of Buffer.t
     | Out_channel of out_channel
 

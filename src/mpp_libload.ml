@@ -51,7 +51,7 @@ let html_of_ocamlc args _cs out =
         let _ = charstream_take_n 1 cs in
         let colend = int_of_string (read_until ':' cs) in
         let fcs = charstream_of_inchannel filename (open_in filename) in
-        let () = 
+        let () =
           for i = 2 to line do
             ignore(read_until '\n' fcs)
           done;
@@ -68,7 +68,7 @@ let html_of_ocamlc args _cs out =
         let () =
           Out.printf out "<span class='error'>";
           try while true do ignore(Ocamltohtml_lexer.token lexbuf1) done
-          with Ocamltohtml_lexer.Eof -> 
+          with Ocamltohtml_lexer.Eof ->
             Out.printf out "</span>";
             try while true do ignore(Ocamltohtml_lexer.token lexbuf2) done
             with Ocamltohtml_lexer.Eof -> ()
@@ -79,7 +79,7 @@ let html_of_ocamlc args _cs out =
           Out.printf out "</pre>\n"
         in ()
     | 0 -> ()
-    | n -> 
+    | n ->
         Out.printf out "<pre class='error'>Command %s returned with code %d, I don't know what to do with it. Here's the output:\n" args n;
         Mpp_actions.cat out tmp1;
         Out.printf out "</span>"
@@ -105,7 +105,7 @@ let fragment args cs out =
   let rec parse_args () =
     eat space_chars s;
     match s.take() with
-      | Some '-' -> 
+      | Some '-' ->
           begin
             match read_until_one_of space_chars s with
               | "fl" | "fromline" ->
@@ -152,7 +152,7 @@ let fragment args cs out =
                   end
               | wrong ->
                   parse_error
-                    ~msg:(Printf.sprintf "Unknown option -%s in usage of builtin frag." 
+                    ~msg:(Printf.sprintf "Unknown option -%s in usage of builtin frag."
                             (String.escaped wrong))
                     location;
                   exit 1
@@ -181,7 +181,7 @@ let fragment args cs out =
       match input_char cs with
         | Some '\n' -> Buffer.contents b
         | Some c -> Buffer.add_char b c; loop()
-        | None -> 
+        | None ->
             match Buffer.contents b with
               | "" -> raise End_of_file
               | l -> l
@@ -259,7 +259,7 @@ let fragment args cs out =
           if !tl > 0 then raise Break
         end
       with End_of_file|Break ->
-        flush out        
+        flush out
 ;;
 
 let fragment args cs out =
