@@ -305,11 +305,10 @@ let _ =
       end
   in
   let register_file f = files_to_process := f :: !files_to_process in
-  try
-    if l > 1 then
-      begin
-        let aligned =
-          Arg.align [
+  if l > 1 then
+    begin
+      let aligned =
+        Arg.align [
             "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
             "-w", Arg.Set(overwrite), " @deprecated [Overwrite existing destination files]. Now MPP always overwrites.";
             "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
@@ -341,11 +340,11 @@ let _ =
             "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
             "--", Arg.Rest(register_file), " If you use this parameter, all remaining arguments are considered as file names.";
           ]
-        in
-        Arg.parse
-          aligned
-          register_file
-          ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
+      in
+      Arg.parse
+        aligned
+        register_file
+        ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
 ~ By default, MPP outputs on stdout. You can specify a file to output to, using the -o option (if you use it multiple times, only the last one is considered).
 ~ MPP reads /dev/stdin unless you give it one or several files to read.
 ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
@@ -356,16 +355,10 @@ let _ =
 ~ Please report bugs: https://github.com/ocaml/MPP-language-blender/issues
 
 List of options:");
-        List.iter process_one_file (List.rev !files_to_process);
-      end;
-    if not !at_least_one_file_processed then
-      begin
-        (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
-        process_one_file "/dev/stdin"
-      end;
-  with e ->
-    let bt = Printexc.get_backtrace () in
-    if debug then Printf.eprintf "%s\n%!" bt;
-    Printf.eprintf "Error: exception <%s>\n%!" (Printexc.to_string e);
-    Pervasives.exit 3
-
+      List.iter process_one_file (List.rev !files_to_process);
+    end;
+  if not !at_least_one_file_processed then
+    begin
+      (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
+      process_one_file "/dev/stdin"
+    end
