@@ -124,7 +124,7 @@ let null_charstream =
     where = where;
   }
 
-let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
+let charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   (* Eventually, we might want to get rid of the "double definition". *)
   let buffer : char list ref = ref [] in
   let line = ref line in

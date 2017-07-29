@@ -20,7 +20,7 @@ let ignore_trailing_spaces = ref false
 
 module Out = Mpp_out
 
-let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
+let preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
   let default_buffer = Buffer.create 4242 in
 
   (* entry point *)
