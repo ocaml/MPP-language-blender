@@ -1,11 +1,5 @@
-(* setup.ml generated for the first time by OASIS v0.3.0 *)
-
-let () =
-  try Topdirs.dir_directory (Sys.getenv "OCAML_TOPLEVEL_PATH")
-  with Not_found -> ();;
-
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 4463497d4d76be948c91dd5170c4a49c) *)
+(* DO NOT EDIT (digest: a426e2d026defb34183b787d31fbdcff) *)
 (******************************************************************************)
 (* OASIS: architecture for building OCaml libraries and applications          *)
 (*                                                                            *)
@@ -37,7 +31,7 @@ let () =
 #require "oasis.dynrun";;
 open OASISDynRun;;
 
-let setup_t = BaseCompat.Compat_0_3.adapt_setup_t setup_t
-open BaseCompat.Compat_0_3
+let setup_t = BaseCompat.Compat_0_4.adapt_setup_t setup_t
+open BaseCompat.Compat_0_4
 (* OASIS_STOP *)
 let () = setup ();;
