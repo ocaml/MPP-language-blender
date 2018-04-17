@@ -495,9 +495,15 @@ let parse_a_string cs =
                     | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c1) -> 
                         begin match cs.take() with
                           | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c2) ->
-                              let s = "123" in
-                                s.[0] <- c0; s.[1] <- c1; s.[2] <- c2;
-                                Buffer.add_char b (char_of_int(int_of_string s))
+                              let s =
+                                String.init 3
+                                  (function
+                                    | 0 -> c0
+                                    | 1 -> c1
+                                    | 2 -> c2
+                                    | _ -> assert false)
+                              in
+                              Buffer.add_char b (char_of_int(int_of_string s))
                           | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
                         end
                     | Some _ | None -> parse_error ~msg:"Error when parsing a string." location
