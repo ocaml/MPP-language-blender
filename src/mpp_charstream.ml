@@ -21,13 +21,13 @@ and column = int
 type t = charstream
 
 
-let parse_error : ?start:location -> ?msg:string -> location -> unit = 
+let parse_error : ?start:location -> ?msg:string -> location -> unit =
   fun ?start ?msg location ->
     let f, l, c = location in
       match start with
         | None ->
             begin match msg with
-              | None -> 
+              | None ->
                   Printf.eprintf
                     "Error in %s:%d:%d.\n%!"
                     f l c
@@ -100,7 +100,7 @@ let null_charstream =
   let cs = ref [] in
   let insert e = cs := e :: !cs in
   let rec take () = match !cs with
-    | x::tl -> 
+    | x::tl ->
         begin match x.take() with
           | Some _ as r -> r
           | None -> cs := tl; take ()
@@ -124,7 +124,7 @@ let null_charstream =
     where = where;
   }
 
-let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
+let charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   (* Eventually, we might want to get rid of the "double definition". *)
   let buffer : char list ref = ref [] in
   let line = ref line in
@@ -145,23 +145,23 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
       | [] ->
           begin
             try match input_char inchan with
-              | '\n' | '\r' as c -> 
+              | '\n' | '\r' as c ->
                   incr line;
                   column := 0 :: !column;
                   Some c
-              | c -> 
+              | c ->
                   incr_column();
                   Some c
             with End_of_file -> None
           end
       | c::tl ->
-          match c with 
-            | '\n' | '\r' -> 
+          match c with
+            | '\n' | '\r' ->
                 incr line;
                 column := 0 :: !column;
                 buffer := tl;
                 Some c
-            | c -> 
+            | c ->
                 incr_column();
                 buffer := tl;
                 Some c
@@ -175,7 +175,7 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   in
   let rec where () =
     match !csl with
-      | [] -> 
+      | [] ->
           filename, !line, (match !column with x::_ -> x| _ -> 0)
       | e::_ -> e.where()
   in
@@ -199,10 +199,10 @@ let rec charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
                   begin
                     decr line;
                     match !column with
-                      | [] -> 
+                      | [] ->
                           column := [0]
                             (* assert false; *)
-                          (* If this happens, either this block is broken 
+                          (* If this happens, either this block is broken
                              or too many characters have been pushed back,
                              in both cases the program is broken and has to be fixed. *)
                       | _::tl -> column := tl
@@ -277,11 +277,11 @@ let charstream_of_string ?(location:location=("<anon-string>",0,0)) (s:string) :
 
 
 let match_token token charstream =
-  if !debug then 
+  if !debug then
     (let _filename, _line, _col = charstream.where () in
        Printf.eprintf "<token=%s@%d-%d----'%s'>\n%!" token _line _col (String.escaped(charstream_peek ~n:20 charstream)));
   let res =
-    token <> "" 
+    token <> ""
     &&
       let rec loop i taken =
         if i >= String.length token then
@@ -291,7 +291,7 @@ let match_token token charstream =
             | None ->
                 false, taken
             | Some c ->
-                if token.[i] = c then 
+                if token.[i] = c then
                   loop (succ i) (c::taken)
                 else
                   false, (c::taken)
@@ -309,11 +309,11 @@ let rec eat (cs:Mpp_charset.t) charstream =
   match charstream.take() with
     | None ->
         ()
-    | Some c -> 
-        if Mpp_charset.mem c cs then 
+    | Some c ->
+        if Mpp_charset.mem c cs then
           eat cs charstream
         else
-          charstream.push c            
+          charstream.push c
 
 
 let read_until ?(caller="") ?(failsafe=false) c charstream : string =
@@ -323,9 +323,9 @@ let read_until ?(caller="") ?(failsafe=false) c charstream : string =
     match charstream.take() with
       | Some z ->
           let () =
-            if !debug then 
+            if !debug then
               Printf.eprintf "Peek<%s>\n%!"
-                (String.escaped (charstream_peek ~n:20 charstream)) 
+                (String.escaped (charstream_peek ~n:20 charstream))
           in
             if c = z then
               begin
@@ -350,7 +350,7 @@ let read_until ?(caller="") ?(failsafe=false) c charstream : string =
   in loop ()
 
 let read_until_one_of ?(caller="") ?(failsafe=false) ?(push_back=false) (cs:Mpp_charset.t) ?(exclude=Mpp_charset.empty) ?(expect:string option) charstream =
-  if !debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs ""); 
+  if !debug then Printf.eprintf "read_until_one_of [%s]\n%!" (Mpp_charset.fold (fun c r -> Printf.sprintf "%s%s" r (Char.escaped c)) cs "");
   let b = Buffer.create 128 in
   let rec loop () =
     match charstream.take() with
@@ -492,7 +492,7 @@ let parse_a_string cs =
             | Some (('x'|'X'| '0' .. '2') as c0) ->
                 begin
                   match cs.take() with
-                    | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c1) -> 
+                    | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c1) ->
                         begin match cs.take() with
                           | Some ('A' .. 'F' | 'a' .. 'f' | '0' .. '9' as c2) ->
                               let s =
@@ -515,7 +515,7 @@ let parse_a_string cs =
       | Some c ->
           Buffer.add_char b c;
           loop()
-  in 
+  in
     loop()
 
 
@@ -528,13 +528,13 @@ let append cs1 cs2 =
   let current_is_cs1 = ref true in
     {
       take  =
-        (fun () -> 
+        (fun () ->
            if !current_is_cs1 then
              match cs1.take() with
                | (Some _) as c ->
                    c
                | None ->
-                   current_is_cs1 := false; 
+                   current_is_cs1 := false;
                    cs2.take()
            else
              cs2.take()
@@ -549,7 +549,7 @@ let delete_trailing_spaces s =
     s
   else
     let l = ref (String.length s) in
-      while 
+      while
         (match s.[!l - 1] with
           | '\n' | '\t' | ' ' | '\r' -> true
           | _ -> false)
@@ -560,7 +560,7 @@ let delete_trailing_spaces s =
         s
       else
         String.sub s 0 !l
-          
+
 
 
 let string_of_charstream ?(keepcs=false) c =

@@ -20,59 +20,57 @@ let ignore_trailing_spaces = ref false
 
 module Out = Mpp_out
 
-let rec preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
+let preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out ->
   let default_buffer = Buffer.create 4242 in
 
   (* entry point *)
   let rec loop (last_cond:bool option ref) : unit =
-    begin
-      if match_token !open_token charstream then
-        open_token_action last_cond ~nesting:false
+    if match_token !open_token charstream then (
+      open_token_action last_cond ~nesting:false;
+      next last_cond)
+    else if match_token !open_nesting_token charstream then (
+      open_token_action last_cond ~nesting:true;
+      next last_cond)
+    else if match_token !endline_comments_token charstream then (
+      endline_comments_token_action();
+      next last_cond)
+    else if match_token !open_comments_token charstream then (
+      open_comments_token_action();
+      next last_cond)
+    else if match_token !open_foreign_token_no_location charstream then (
+      open_foreign_token_action ~no_target:true;
+      next last_cond)
+    else if match_token !open_foreign_token charstream then (
+      open_foreign_token_action ~no_target:false;
+      next last_cond)
+    else if match_token !close_foreign_token charstream then (
+      close_foreign_token_action();
+      next last_cond)
+    else if match_token !close_token charstream then (
+      close_token_action();
+      next last_cond)
+    else if match_token !close_comments_token charstream then (
+      close_comments_token_action();
+      next last_cond)
+    else ( (* default action *)
+      match charstream.take() with
+      | None -> next last_cond
+      | Some c ->
+         Buffer.add_string default_buffer
+           (!Mpp_init.foreign.string_escape (String.make 1 c));
+         loop last_cond
+    )
 
-      else if match_token !open_nesting_token charstream then
-        open_token_action last_cond ~nesting:true
-
-      else if match_token !endline_comments_token charstream then
-        endline_comments_token_action()
-
-      else if match_token !open_comments_token charstream then
-        open_comments_token_action()
-
-      else if match_token !open_foreign_token_no_location charstream then
-        open_foreign_token_action ~no_target:true
-
-      else if match_token !open_foreign_token charstream then
-        open_foreign_token_action ~no_target:false
-
-      else if match_token !close_foreign_token charstream then
-        close_foreign_token_action()
-
-      else if match_token !close_token charstream then
-        close_token_action()
-
-      else if match_token !close_comments_token charstream then
-        close_comments_token_action()
-
-      else
-        default last_cond (charstream.take())
-    end;
+  and next last_cond =
     match charstream.take() with
-      | None -> ()
-      | Some c -> charstream.push c;  loop last_cond
+    | None -> ()
+    | Some c -> charstream.push c;  loop last_cond
 
   and flush_default() =
     let r = !Mpp_init.foreign.print (Buffer.contents default_buffer) in
       Out.output_string out r;
       Buffer.clear default_buffer;
       Out.flush out
-
-  (* default action *)
-  and default last_cond = function
-    | None -> ()
-    | Some c ->
-        Buffer.add_string default_buffer
-          (!Mpp_init.foreign.string_escape (String.make 1 c));
-        loop last_cond
 
   and open_foreign_token_action ~no_target =
     flush_default();
@@ -305,11 +303,10 @@ let _ =
       end
   in
   let register_file f = files_to_process := f :: !files_to_process in
-  try
-    if l > 1 then
-      begin
-        let aligned =
-          Arg.align [
+  if l > 1 then
+    begin
+      let aligned =
+        Arg.align [
             "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
             "-w", Arg.Set(overwrite), " @deprecated [Overwrite existing destination files]. Now MPP always overwrites.";
             "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
@@ -341,11 +338,11 @@ let _ =
             "-snl", Arg.Set(save_newlines), " Don't print newlines that follow closing blocks.";
             "--", Arg.Rest(register_file), " If you use this parameter, all remaining arguments are considered as file names.";
           ]
-        in
-        Arg.parse
-          aligned
-          register_file
-          ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
+      in
+      Arg.parse
+        aligned
+        register_file
+        ("Usage: " ^ Sys.argv.(0) ^ " [-options] [filename1.ext.mpp ... filenameN.ext.mpp]
 ~ By default, MPP outputs on stdout. You can specify a file to output to, using the -o option (if you use it multiple times, only the last one is considered).
 ~ MPP reads /dev/stdin unless you give it one or several files to read.
 ~ If a token becomes empty, it removes the associated feature (remember to empty closing tokens if you empty opening ones).
@@ -356,16 +353,10 @@ let _ =
 ~ Please report bugs: https://github.com/ocaml/MPP-language-blender/issues
 
 List of options:");
-        List.iter process_one_file (List.rev !files_to_process);
-      end;
-    if not !at_least_one_file_processed then
-      begin
-        (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
-        process_one_file "/dev/stdin"
-      end;
-  with e ->
-    let bt = Printexc.get_backtrace () in
-    if debug then Printf.eprintf "%s\n%!" bt;
-    Printf.eprintf "Error: exception <%s>\n%!" (Printexc.to_string e);
-    Pervasives.exit 3
-
+      List.iter process_one_file (List.rev !files_to_process);
+    end;
+  if not !at_least_one_file_processed then
+    begin
+      (* preprocess (charstream_of_inchannel "/dev/stdin" stdin) (Out.Out_channel stdout) *)
+      process_one_file "/dev/stdin"
+    end
