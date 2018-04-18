@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "mpp"
-version: "0.3.1"
+version: "0.3.2"
 maintainer: "Philippe Wang <philippe.wang@gmail.com>"
 authors: [ "Philippe Wang <philippe.wang@gmail.com>" ]
 license: "ISC"
