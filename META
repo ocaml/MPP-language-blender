@@ -1,5 +1,0 @@
-version = "dev"
-description = "MPP: meta preprocessor and language blender"
-archive(byte) = "mpp.cma"
-archive(native) = "mpp.cmxa"
-exists_if = "mpp.cma"

@@ -54,7 +54,7 @@ module Mpp_conditions = struct
           Mpp_charstream.parse_error ~msg:"`else' without a previous \
                                            matching conditional."
                                      (cs.Mpp_charstream.where());
-          Pervasives.exit 1
+          exit 1
       | Some c ->
           last_cond := None;
           if c then
@@ -129,9 +129,9 @@ end = struct
           ~msg:(sprintf "You tried to get the value of variable %s, \
                          which doesn't exist (1)." s)
           (cs.where());
-        Pervasives.exit 1
+        exit 1
 
-  let tryget s cs out =
+  let tryget s _ out =
     let s = suppress_spaces (string_of_charstream s) in
       try
         Out.output_string out (find s !env)
@@ -147,7 +147,7 @@ end = struct
           ~msg:(sprintf "You tried to get the value of variable %s, \
                          which doesn't exist (2)." s)
           (cs.where());
-        Pervasives.exit 1
+        exit 1
 
 
   let ifdef last_cond nesting (cs:charstream) bcs out =
@@ -223,7 +223,7 @@ end = struct
       | None ->
           parse_error ~msg:"`elseifdef' without a matching previous `if'."
             (cs.where());
-          Pervasives.exit 1
+          exit 1
 end
   (* / END VARIABLES *)
 
@@ -280,7 +280,7 @@ let cmd arg charstream (out:Out.t) =
       | 0 -> ()
       | ec ->
           if not (!ignore_exec_error) then
-            Pervasives.failwith
+            failwith
               (sprintf "Command <%s> ended with error <%d>. Location: %s:%d:%d."
                  (string_of_charstream ~keepcs:true arg) ec file line column)
           else
@@ -298,7 +298,7 @@ let copy ~trunc _last_cond _nesting filename cs (out:Out.t) =
   let f = Out.Out_channel o in
     Out.output_string f s;
     Out.flush f;
-    Pervasives.close_out o;
+    close_out o;
     Out.output_string out s
 
 
@@ -324,7 +324,7 @@ let builtins : action_set ref =
       ~msg:(sprintf "your message is <%s>. No matter what, I'm exiting."
                     (string_of_charstream ~keepcs:true s))
       (cs.where());
-    Pervasives.exit 1
+    exit 1
   in
   let r =
     List.fold_left
@@ -369,7 +369,7 @@ let apply_builtin action_name location =
         parse_error
           ~msg:(sprintf "Command <%s> not found!" action_name)
           location;
-        Pervasives.exit 1
+        exit 1
       end
 
 let exec (nesting:bool) (last_cond:bool option ref) (action_name:string)
@@ -487,7 +487,7 @@ let _ =
            ~msg:(sprintf "You tried to get the value of process-environment \
                           variable %s, which doesn't exist." v)
            (cs.where());
-        Pervasives.exit 1
+        exit 1
     )
     "Get a process-environment variable. Stops if it doesn't find it.";
   register

@@ -70,7 +70,7 @@ module Mpp_charset = Mpp_charset
 
 let charstream_take_n n charstream =
   let b = Buffer.create n in
-    for i = 1 to n do
+    for _ = 1 to n do
       match charstream.take() with
         | None -> ()
         | Some c -> Buffer.add_char b c
@@ -173,7 +173,7 @@ let charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
   let insert cs =
     csl := cs :: !csl
   in
-  let rec where () =
+  let where () =
     match !csl with
       | [] ->
           filename, !line, (match !column with x::_ -> x| _ -> 0)
@@ -192,7 +192,7 @@ let charstream_of_inchannel filename ?(line=1) ?(column=0) inchan =
       | [] ->
           csl := [null_charstream];
           push c
-      | e::tl ->
+      | e::_ ->
           begin
             match c with
               | '\n' | '\r' ->
@@ -232,7 +232,7 @@ let charstream_of_string ?(location:location=("<anon-string>",0,0)) (s:string) :
              | '\n' as c ->
                location :=
                  (match !location with
-                  | fn, line, col -> fn, line+1, 0);
+                  | fn, line, _ -> fn, line+1, 0);
                incr i;
                Some c
              | c ->
@@ -316,7 +316,7 @@ let rec eat (cs:Mpp_charset.t) charstream =
           charstream.push c
 
 
-let read_until ?(caller="") ?(failsafe=false) c charstream : string =
+let [@warning "-27"] read_until ?(caller="") ?(failsafe=false) c charstream : string =
   if !debug then Printf.eprintf "read_until '%s'\n%!" (Char.escaped c);
   let b = Buffer.create 128 in
   let rec loop () =

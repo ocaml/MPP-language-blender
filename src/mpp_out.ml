@@ -15,15 +15,15 @@ let output_buffer o b = match o with
 
 let flush o = match o with
   | Buffer _ -> ()
-  | Out_channel oc -> Pervasives.flush oc
+  | Out_channel oc -> flush oc
 
 let output_string o s = match o with
   | Buffer b -> Buffer.add_string b s
-  | Out_channel oc -> Pervasives.output_string oc s
+  | Out_channel oc -> output_string oc s
 
 let output_char o c = match o with
   | Buffer b -> Buffer.add_char b c
-  | Out_channel oc -> Pervasives.output_char oc c
+  | Out_channel oc -> output_char oc c
 
 let printf o fmt =
   (* This printf function is provided by Benoît Vaugon *)
@@ -43,15 +43,15 @@ let printf o fmt =
       | Out_channel oc ->
           let b = Buffer.create 16 in
           let k b =
-            Pervasives.output_string oc (Buffer.contents b);
-            if contains_flush fmt then Pervasives.flush oc
+            Stdlib.output_string oc (Buffer.contents b);
+            if contains_flush fmt then Stdlib.flush oc
           in
             Printf.kbprintf k b fmt
 
 let output_charstream o cs =
   match o with
     | Buffer buff -> Buffer.add_string buff (Mpp_charstream.string_of_charstream ~keepcs:true cs)
-    | Out_channel o -> Pervasives.output_string o (Mpp_charstream.string_of_charstream ~keepcs:true cs)
+    | Out_channel o -> Stdlib.output_string o (Mpp_charstream.string_of_charstream ~keepcs:true cs)
 
 let cat (out:t) filename =
   try

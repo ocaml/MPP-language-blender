@@ -27,7 +27,7 @@ let open_foreign_token = ref "{<"
 let open_foreign_token_no_location = ref "{<!"
 let close_foreign_token = ref ">}"
 
-let target_language_location_handler = ref (fun ?filename line -> "")
+let [@warning "-27"] target_language_location_handler = ref (fun ?filename line -> "")
 
 let cpp_location_handler ?filename line =
   match filename with
@@ -46,7 +46,7 @@ let list_target () =
   List.iter
     (fun (name,  _) -> Printf.printf "%s\n" name)
     target_language_location_handlers;
-  Pervasives.exit 0
+  exit 0
 
 
 let set_target_language_location_handler h =
@@ -57,7 +57,7 @@ let set_target_language_location_handler h =
     Printf.eprintf
       "MPP: Error: Target language location handler <%s> is not available.\n%!"
       h;
-    Pervasives.exit 1
+    exit 1
 
 let newline_chars = Mpp_charset.of_list ['\n'; '\r']
 
@@ -189,7 +189,7 @@ let foreign_blocks = [
   };
 ]
 
-let default_foreign_block =
+let [@warning "-27"] default_foreign_block =
   { name = "";
     command = "";
     suffix = "";
@@ -210,7 +210,7 @@ let list_foreign () =
   List.iter
     (fun {name; _} -> Printf.printf "%s\n" name)
     foreign_blocks;
-  Pervasives.exit 0
+  exit 0
 
 (* PROPAGATION *)
 let () = Mpp_actions.space_chars := space_chars
