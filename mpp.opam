@@ -1,6 +1,5 @@
 opam-version: "2.0"
 name: "mpp"
-version: "0.3.2"
 maintainer: "Philippe Wang <philippe.wang@gmail.com>"
 authors: [ "Philippe Wang <philippe.wang@gmail.com>" ]
 license: "ISC"
@@ -10,9 +9,9 @@ bug-reports: "https://github.com/ocaml/MPP-language-blender/issues"
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.02"}
-  "dune" {build & >= "1.11.0"}
+  "dune" {>"1.11.0"}
 ]
-synopsis: "A preprocessor meant to blend languages."
+synopsis: "A preprocessor meant to blend languages"
 description: """
 MPP is a meta processor that is meant to bring any programming
 language to the preprocessing level. You can easily use OCaml as a
