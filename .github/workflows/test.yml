@@ -1,0 +1,19 @@
+name: MPP
+on: [push]
+jobs:
+  tests:
+    name: Tests
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        ocaml-version: [ '4.06.1', '4.07.0', '4.08.1', '4.09.0' ]
+        operating-system: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@master
+    - uses: avsm/setup-ocaml@master
+      with:
+        ocaml-version: ${{ matrix.ocaml-version }}
+    - name: Dune
+      run: opam install -y dune
+    - name: Build
+      run: opam exec -- dune build
