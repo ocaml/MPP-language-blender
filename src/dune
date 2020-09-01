@@ -1,6 +1,7 @@
 (library
   (name mpp)
   (public_name mpp)
+  (libraries stdlib-shims)
   (modules mpp_charset mpp_charstream mpp_out mpp_stringmap mpp_actions mpp_init mpp_core mpp_load)
   (wrapped false))
 
@@ -8,4 +9,4 @@
   (name mpp)
   (public_name mpp)
   (modules mpp)
-  (libraries mpp))
+  (libraries stdlib-shims mpp))
