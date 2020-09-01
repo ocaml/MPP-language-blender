@@ -10,6 +10,7 @@ build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.02"}
   "dune" {>"1.11.0"}
+  "stdlib-shims"
 ]
 synopsis: "A preprocessor meant to blend languages"
 description: """

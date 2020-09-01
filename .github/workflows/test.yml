@@ -13,7 +13,7 @@ jobs:
     - uses: avsm/setup-ocaml@master
       with:
         ocaml-version: ${{ matrix.ocaml-version }}
-    - name: Dune
-      run: opam install -y dune
+    - name: Dune-shims
+      run: opam install -y dune stdlib-shims
     - name: Build
       run: opam exec -- dune build
