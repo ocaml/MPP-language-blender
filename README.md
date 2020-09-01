@@ -7,7 +7,7 @@ MPP is a preprocessor, a little like
 [M4](https://www.gnu.org/software/m4/m4.html),
 but simpler therefore generally less powerful.
 For instance, you can't define your own functions.
-(However, you can do it and much more if you use it as a meta preprocessor, cf. section [A meta preprocessor](#a_meta_preprocessor).)
+(However, you can do it and much more if you use it as a meta preprocessor, cf. section [A meta preprocessor](#22-a-meta-preprocessor).)
 
 As a simple preprocessor, you may define variables on the command line
 and use conditional coding in your files.
