@@ -34,7 +34,7 @@ $ mpp -set X=42 <<< '{{ ifdef X (( get X ))}}'
 ```
 
 Note that `{{` and `}}` are the default tokens to allow nesting,
-and `((` and `))` are the default tokens that do not allow nesting.
+and `((` and `))` are the default tokens that do *not* allow nesting.
 
 ##### Labeling MPP instructions
 
@@ -66,6 +66,23 @@ $ mpp -set X <<< '((<< ifdef X hello world<<))'
 hello world
 ```
 *Note that you cannot use `<<` as the name for the opening and expect `>>` to be the closing name. The name for both closing and opening have to be identical (and there's no option to make then unidentical).*
+
+###### Tips: repeating names
+
+For instance, if you define nesting-capable opening and closing tokens as `(**#` and `#**)`, you could nest like this:
+```
+(**## echo outter(**# echo inner#**)##**)
+
+(**### echo L-3(**## echo L-1 (**# echo L-2#**)##**)###**)
+```
+which you may or may not find better than latin-alphabet-based or digit-based names like in
+```
+(**#1 echo outter(**# echo inner#**)1#**)
+
+(**#A echo L-3(**#B echo L-1 (**# echo L-2#**)B#**)A#**)
+```
+The choice is up to you!
+
 
 #### Customizing tokens defining MPP instructions
 
