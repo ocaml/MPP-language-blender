@@ -307,7 +307,12 @@ let _ =
     begin
       let aligned =
         Arg.align [
-            "-o", Arg.Set_string(common_output_filename), "f Output to the file f instead of standard option.";
+            "-o", Arg.Set_string(common_output_filename), "f Output to file f instead of standard output.";
+            "-O", Arg.String(fun s ->
+                common_output_filename := s;
+                Mpp_actions.Variable.set (charstream_of_string "OUTPUT") (charstream_of_string s) stdout
+              ), "f Output to file f instead of standard output \
+                                                           and set OUTPUT variable to f.";
             "-w", Arg.Set(overwrite), " @deprecated [Overwrite existing destination files]. Now MPP always overwrites.";
             "-c", Arg.Set(continue), " Continue even if an input file doesn't exist.";
             "-ine", Arg.Set(Mpp_actions.ignore_non_existing_commands), " Ignore non existing commands instead of stopping.";
