@@ -152,12 +152,12 @@ not always lightweight enough to answer your needs. Also, you might want to
 use Bash or PHP or Perl as your preprocessor language. Well, PHP is widely
 used for preprocessing HTML pages, and it generally uses `<?php` and `?>`
 as delimiters. These may be your delimiters of choice, but they could also
-interfere in a bad way with your workflow.
+interfere in a bad way with your workflow. And perhaps you just want to use
+a strongly-typed programming language as your preprocessor language!
 
 MPP allows you to choose your delimiters. And to name them. And to nest them.
-With PHP, you cannot  `<?php something <?php ?> something ?>`, can you?
 
-If you chose to use OCaml as the processor language, you may want to
+If you choose to use OCaml as the processor language, you may want to
 use an opening token starting with `(*` and closing token ending with `*)`,
 such as `(*#` and `#*)`. An other idea is to use `begin!` and `!end`.
 That's to avoid messing with syntax highlighters.
