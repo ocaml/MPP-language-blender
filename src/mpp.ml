@@ -82,7 +82,7 @@ let preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out -
               ~msg:"No characters left to read right after an opening! (F2)"
               (charstream.where());
             exit 1
-        | Some (' ' | '\t') ->
+        | Some (' ' | '\t' | '\n' | '\r') ->
             ""
         | Some c ->
             charstream.push c;
@@ -122,7 +122,7 @@ let preprocess : charstream -> Out.t -> unit = fun (charstream:charstream) out -
               ~msg:"No characters left to read right after an opening! (2)"
               (charstream.where());
             exit 1
-        | Some (' ' | '\t') ->
+        | Some (' ' | '\t' | '\n' | '\r') ->
             None
         | Some c ->
             charstream.push c;
